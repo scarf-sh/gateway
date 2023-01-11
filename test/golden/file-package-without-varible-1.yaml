@@ -1,0 +1,11 @@
+# url contains query string but has no template variables
+path: "/data?drilldowns=Nation&measures=Population"
+headers:
+  Host: vincent.com
+manifest:
+  rules:
+    - type: file-v1
+      incoming-path: "/data?drilldowns=Nation&measures=Population"
+      domain: vincent.com
+      package-id: a1b331fa-1539-49e5-bdc4-dc8a48e586d1
+      outgoing-url: "https://datausa.io/api/data?drilldowns=Nation&measures=Population"

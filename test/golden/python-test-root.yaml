@@ -1,0 +1,37 @@
+path: /simple/
+headers: 
+  Host: cool-stuff.io
+manifest:
+  rules:
+    - type:  python-v1
+      domain: cool-stuff.io
+      package-name: numpy
+      file-name: numpy-1.3.0.tar.gz
+      version: 1.3.0.tar.gz
+      hash-value: null
+      gpg-sig: null
+      requires-python: null
+      backend-url: https://files.pythonhosted.org/packages/ab/67/19e93e3f8c3e077dcf6fc54e84e1cff609c4a7e0a3ce14f70794dde60063/numpy-1.3.0.tar.gz#sha256=7524687cce85aa78103046db5e617c626b0ef871a203a049159f88f35647c90d
+      package-id: "123"
+
+    - type:  python-v1
+      domain: cool-stuff.io
+      package-name: numpy
+      file-name: numpy-1.4.0.tar.gz
+      version: 1.4.0.tar.gz
+      hash-value: null
+      gpg-sig: null
+      requires-python: null
+      backend-url: https://files.pythonhosted.org/packages/ab/67/19e93e3f8c3e077dcf6fc54e84e1cff609c4a7e0a3ce14f70794dde60063/numpy-1.3.0.tar.gz#sha256=7524687cce85aa78103046db5e617c626b0ef871a203a049159f88f35647c90d"
+      package-id: "123"
+
+    - type:  python-v1
+      domain: cool-stuff.io
+      package-name: cipy
+      file-name: cipy-1.0.tar.gz
+      version: 1.0.tar.gz
+      hash-value: null
+      gpg-sig: null
+      requires-python: null
+      backend-url: https://files.pythonhosted.org/packages/ab/67/19e93e3f8c3e077dcf6fc54e84e1cff609c4a7e0a3ce14f70794dde60063/numpy-1.3.0.tar.gz#sha256=7524687cce85aa78103046db5e617c626b0ef871a203a049159f88f35647c90d"
+      package-id: "123"

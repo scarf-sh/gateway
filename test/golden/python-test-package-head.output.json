@@ -1,0 +1,38 @@
+{
+    "capture": {
+        "!v": "1",
+        "extract": {
+            "backend-url": null,
+            "file": null,
+            "package": "123",
+            "type": "python",
+            "version": null
+        },
+        "origin": "test-region",
+        "partition-key": "python-2022-01-11-08-123",
+        "rawHeaders": "Host: cool-stuff.io",
+        "referer": "",
+        "request": {
+            "contentType": "",
+            "host": "cool-stuff.io",
+            "method": "HEAD",
+            "queryString": "",
+            "remoteAddress": "0.0.0.0",
+            "remotePort": "0",
+            "uri": "/simple/numpy/"
+        },
+        "request_id": "00000000000000000000000000000000-0",
+        "request_time": 0,
+        "responseStatus": 200,
+        "time": "2022-01-11T08:34:00.914835Z",
+        "trace": null,
+        "unixTime": 1641890041,
+        "userAgent": ""
+    },
+    "headers": {
+        "Content-Length": "126",
+        "Content-Type": "text/html",
+        "Etag": "\"Cb86PcykhhxBlk52ae8CdYlOomxqTrO8nKVpHYZFI3I=\""
+    },
+    "status": 200
+}

@@ -1,0 +1,36 @@
+{
+    "capture": {
+        "!v": "1",
+        "extract": {
+            "backend-url": null,
+            "file": null,
+            "package": null,
+            "type": "python",
+            "version": null
+        },
+        "origin": "test-region",
+        "partition-key": "python-2022-01-11-08-",
+        "rawHeaders": "Host: cool-stuff.io\r\nIf-None-Match: \"agnhjMSIWv0_F5FCrBDmit2jdkTb4QLM7v4tnUKUs-U=\"",
+        "referer": "",
+        "request": {
+            "contentType": "",
+            "host": "cool-stuff.io",
+            "method": "GET",
+            "queryString": "",
+            "remoteAddress": "0.0.0.0",
+            "remotePort": "0",
+            "uri": "/simple/"
+        },
+        "request_id": "00000000000000000000000000000000-0",
+        "request_time": 0,
+        "responseStatus": 304,
+        "time": "2022-01-11T08:34:00.914835Z",
+        "trace": null,
+        "unixTime": 1641890041,
+        "userAgent": ""
+    },
+    "headers": {
+        "etag": "\"agnhjMSIWv0_F5FCrBDmit2jdkTb4QLM7v4tnUKUs-U=\""
+    },
+    "status": 304
+}

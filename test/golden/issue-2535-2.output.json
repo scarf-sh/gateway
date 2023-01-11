@@ -1,0 +1,41 @@
+{
+    "capture": {
+        "!v": "1",
+        "extract": {
+            "auto-create": null,
+            "backend-registry": "ghcr.io",
+            "image": [
+                "someengineering",
+                "resotoshell"
+            ],
+            "package": "bd06145b-3f32-4f36-9755-69b3dfb6e71d",
+            "reference": "latest",
+            "type": "docker"
+        },
+        "origin": "test-region",
+        "partition-key": "docker-2022-01-11-08-someengineering/resotoshell",
+        "rawHeaders": "Host: somecr.io",
+        "referer": "",
+        "request": {
+            "contentType": "",
+            "host": "somecr.io",
+            "method": "GET",
+            "queryString": "",
+            "remoteAddress": "0.0.0.0",
+            "remotePort": "0",
+            "uri": "/v2/someengineering/resotoshell/manifests/latest"
+        },
+        "request_id": "00000000000000000000000000000000-0",
+        "request_time": 0,
+        "responseStatus": 307,
+        "time": "2022-01-11T08:34:00.914835Z",
+        "trace": null,
+        "unixTime": 1641890041,
+        "userAgent": ""
+    },
+    "headers": {
+        "Location": "https://ghcr.io/v2/someengineering/resotoshell/manifests/latest",
+        "X-This-Request-Was-Proxied": "1"
+    },
+    "status": 307
+}

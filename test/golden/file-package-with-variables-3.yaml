@@ -1,0 +1,14 @@
+# TODO: BUG - We should allow for query params to come in any order
+#
+# multiple variables from multiple query values
+# but path query params are in different order to incoming-path and outgoing-url
+path: "/data?measures=Population&drilldowns=Nation"
+headers:
+  Host: vincent.com
+manifest:
+  rules:
+    - type: file-v1
+      incoming-path: "/data?drilldowns={drilldowns}&measures={measures}"
+      domain: vincent.com
+      package-id: a1b331fa-1539-49e5-bdc4-dc8a48e586d1
+      outgoing-url: "https://datausa.io/api/data?drilldowns={drilldowns}&measures={measures}"

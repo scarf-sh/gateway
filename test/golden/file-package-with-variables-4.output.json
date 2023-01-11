@@ -1,0 +1,37 @@
+{
+    "capture": {
+        "!v": "1",
+        "extract": {
+            "package": "a1b331fa-1539-49e5-bdc4-dc8a48e586d1",
+            "type": "flatfile",
+            "variables": {
+                "a": "api",
+                "b": "data"
+            }
+        },
+        "origin": "test-region",
+        "partition-key": "file-2022-01-11-08-a1b331fa-1539-49e5-bdc4-dc8a48e586d1",
+        "rawHeaders": "Host: vincent.com",
+        "referer": "",
+        "request": {
+            "contentType": "",
+            "host": "vincent.com",
+            "method": "GET",
+            "queryString": "",
+            "remoteAddress": "0.0.0.0",
+            "remotePort": "0",
+            "uri": "/api/data"
+        },
+        "request_id": "00000000000000000000000000000000-0",
+        "request_time": 0,
+        "responseStatus": 302,
+        "time": "2022-01-11T08:34:00.914835Z",
+        "trace": null,
+        "unixTime": 1641890041,
+        "userAgent": ""
+    },
+    "headers": {
+        "Location": "https://datausa.io/api/data"
+    },
+    "status": 302
+}

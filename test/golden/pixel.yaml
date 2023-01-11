@@ -1,0 +1,5 @@
+path: a.png?x-pxid=12345
+headers: 
+  Host: static.scarf.sh
+manifest:
+  rules: []

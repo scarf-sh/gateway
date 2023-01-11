@@ -1,0 +1,35 @@
+{
+    "capture": {
+        "!v": "1",
+        "extract": {
+            "pixel-id": "12345",
+            "type": "pixel"
+        },
+        "origin": "test-region",
+        "partition-key": "pixel-2022-01-11-08-12345",
+        "rawHeaders": "Host: static.scarf.sh",
+        "referer": "",
+        "request": {
+            "contentType": "",
+            "host": "static.scarf.sh",
+            "method": "GET",
+            "queryString": "?x-pxid=12345",
+            "remoteAddress": "0.0.0.0",
+            "remotePort": "0",
+            "uri": "/a.png"
+        },
+        "request_id": "00000000000000000000000000000000-0",
+        "request_time": 0,
+        "responseStatus": 200,
+        "time": "2022-01-11T08:34:00.914835Z",
+        "trace": null,
+        "unixTime": 1641890041,
+        "userAgent": ""
+    },
+    "headers": {
+        "Cache-control": "no-cache, no-store, must-revalidate",
+        "Content-Length": "24",
+        "Content-Type": "image/png"
+    },
+    "status": 200
+}

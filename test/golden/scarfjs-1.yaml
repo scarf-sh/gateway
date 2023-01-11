@@ -1,0 +1,6 @@
+path: /package-event/install
+method: POST
+headers: 
+  Host: scarf.sh
+manifest: 
+  rules: []
