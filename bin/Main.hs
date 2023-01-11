@@ -1,47 +1,59 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
-{-# HLINT ignore "Use fewer imports" #-}
 
-module Main where
+module Main (main) where
 
-import Network.HTTP.Client.OpenSSL (withOpenSSL, defaultMakeContext,
-  defaultOpenSSLSettings, opensslManagerSettings)
-import System.IO (hSetBinaryMode, stdout, hSetBuffering,
-  BufferMode (..), hFlush)
-import Scarf.Lib.Tracing (withRootTracer)
-import Network.HTTP.Client (Manager, ManagerSettings (..), newManager)
-import OpenSSL.Session (contextSetDefaultVerifyPaths)
 import Control.Concurrent (MVar, newMVar, putMVar, takeMVar)
-import Control.Exception (mask, bracket)
-import Scarf.Gateway.Rule.Capture (newRequestIdGen)
-import Scarf.Lib.Tracing (runTracer)
-import Scarf.Lib.Tracing (traced_)
-import Scarf.Lib.Tracing (spanOpts)
-import Scarf.Gateway (GatewayConfig(..))
-import Scarf.Lib.Tracing (Tracer)
-import Scarf.Gateway.Rule.Capture (RequestId)
-import Scarf.Lib.Tracing (ActiveSpan)
-import Network.Wai (Request (..), responseLBS)
-import Network.HTTP.Types (Status, ok200, notFound404)
-import Scarf.Gateway (RuleCapture)
-import Scarf.Gateway (RuleCapture(..))
+import Control.Concurrent.Async (withAsync)
+import Control.Exception (bracket, mask)
+import Control.Monad.IO.Class (liftIO)
+import Data.ByteString.Builder (hPutBuilder)
+import Data.Foldable (for_)
 import Data.Text (Text)
 import Data.Text qualified as Text
-import Scarf.Lib.Tracing (childOf)
-import Control.Monad.IO.Class (liftIO)
-import Scarf.Lib.Tracing (TagVal(..))
-import Scarf.Lib.Tracing (addTag)
 import Data.Text.Encoding qualified as Text
-import Scarf.Gateway (proxyTo)
-import Control.Concurrent.Async (withAsync)
-import Data.Foldable (for_)
 import Data.Time (getCurrentTime)
-import Scarf.Gateway.Rule.Capture (captureRequest)
-import Scarf.Lib.Tracing (getSpanContext)
-import Data.ByteString.Builder (hPutBuilder)
-import Scarf.Gateway.Rule.Capture (encodeCapturedRequestToJSON)
+import Network.HTTP.Client (Manager, ManagerSettings (..), newManager)
+import Network.HTTP.Client.OpenSSL
+  ( defaultMakeContext,
+    defaultOpenSSLSettings,
+    opensslManagerSettings,
+    withOpenSSL,
+  )
+import Network.HTTP.Types (Status, notFound404, ok200)
+import Network.Wai (Request (..), responseLBS)
 import Network.Wai.Handler.Warp (run)
-import Scarf.Gateway (gateway)
+import OpenSSL.Session (contextSetDefaultVerifyPaths)
+import Scarf.Gateway
+  ( GatewayConfig (..),
+    RuleCapture (..),
+    gateway,
+    proxyTo,
+  )
+import Scarf.Gateway.Rule.Capture
+  ( RequestId,
+    captureRequest,
+    encodeCapturedRequestToJSON,
+    newRequestIdGen,
+  )
+import Scarf.Lib.Tracing
+  ( ActiveSpan,
+    TagVal (..),
+    Tracer,
+    addTag,
+    childOf,
+    getSpanContext,
+    runTracer,
+    spanOpts,
+    traced_,
+    withRootTracer,
+  )
+import System.IO
+  ( BufferMode (..),
+    hFlush,
+    hSetBinaryMode,
+    hSetBuffering,
+    stdout,
+  )
 
 -- | Creates a new 'Manager' that uses OpenSSL to establish secure connections.
 newOpenSSLManager ::
@@ -59,7 +71,7 @@ newOpenSSLManager maxOpenConn = do
         (opensslManagerSettings makeContext)
           { managerConnCount = maxOpenConn
           }
-          
+
   newManager managerSettings
 
 -- | We want to avoid garbled output when writing outputs to STDOUT. hPutBuilder
@@ -137,7 +149,6 @@ healthcheck = run 8082 $ \request respond -> do
 
 main :: IO ()
 main = withOpenSSL $ do
-
   -- new OpenSSLManager with a fixed number of proxy connections
   manager <- newOpenSSLManager 5
 
@@ -179,5 +190,3 @@ main = withOpenSSL $ do
         liftIO $
           withAsync healthcheck $ \_ ->
             run 8081 (gateway tracer gatewayConfig)
-
-

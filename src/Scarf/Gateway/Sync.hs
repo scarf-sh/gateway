@@ -12,7 +12,7 @@ module Scarf.Gateway.Sync
     DomainLookup,
     GetIfChanged (..),
     Changed (..),
-    withBackgroundSync
+    withBackgroundSync,
   )
 where
 

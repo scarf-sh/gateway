@@ -1,4 +1,5 @@
 cabal-version:      3.0
+
 -- The cabal-version field refers to the version of the .cabal specification,
 -- and can be different from the cabal-install (the tool) version and the
 -- Cabal (the library) version you are using. As such, the Cabal (the library)
@@ -49,7 +50,6 @@ extra-doc-files:    CHANGELOG.md
 
 -- Extra source files to be distributed with the package, such as examples, or a tutorial module.
 extra-source-files: README.md
-
 data-files:
   a.png
   default.dhall
@@ -59,7 +59,7 @@ source-repository head
   location: https://github.com/scarf-sh/scarf-server
 
 common common-stuff
-    ghc-options: -Wall -Werror -Wno-name-shadowing
+  ghc-options: -Wall -Werror -Wno-name-shadowing
 
 library
   import:           common-stuff
@@ -81,12 +81,12 @@ library
     , async
     , atomic-primops
     , attoparsec
-    , conduit
     , base
     , base64-bytestring
     , burrito
     , bytestring
     , case-insensitive
+    , conduit
     , cryptohash-sha256
     , exceptions
     , hashable
@@ -180,4 +180,3 @@ test-suite scarf-gateway-test
     , yaml
 
   hs-source-dirs:   test
-

@@ -28,15 +28,16 @@ import Conduit
     ResourceT,
     bracketP,
   )
-import Control.Monad.IO.Class (liftIO, MonadIO)
-import Data.IORef (newIORef, atomicWriteIORef, readIORef)
 import Control.Exception (BlockedIndefinitelyOnSTM, bracket, catch)
 import Control.Monad (when)
 import Control.Monad.Catch (MonadMask)
+import Control.Monad.IO.Class (MonadIO, liftIO)
+import Data.Foldable (traverse_)
+import Data.IORef (atomicWriteIORef, newIORef, readIORef)
 import Data.Text (pack, splitOn, unpack)
-import Text.Read (readMaybe)
 import Data.Text qualified as Text
-import Lens.Micro.Platform (view, (.~), (^.), (&))
+import Data.Text.Encoding (decodeUtf8)
+import Lens.Micro.Platform (view, (&), (.~), (^.))
 import Network.HTTP.Client (Manager)
 import Network.Wai (Application, pathInfo, requestMethod)
 import Network.Wai.Middleware.OpenTracing (withOperationName)
@@ -87,7 +88,6 @@ import OpenTracing.Jaeger.AgentReporter
     jaoAddr,
     withJaegerAgent,
   )
-import Data.Text.Encoding (decodeUtf8)
 import OpenTracing.Reporting.Batch
   ( batchOptions,
     batchReporter,
@@ -102,7 +102,6 @@ import OpenTracing.Tracer qualified as Tracer
     startSpan,
     traced_,
   )
-import Data.Foldable (traverse_)
 import OpenTracing.Zipkin.V2
   ( Endpoint (..),
     closeZipkin,
@@ -113,6 +112,8 @@ import OpenTracing.Zipkin.V2
   )
 import System.Environment (lookupEnv)
 import System.IO.Unsafe (unsafePerformIO)
+import Text.Read (readMaybe)
+
 -- import Prelude hiding (lookupEnv)
 
 type MonadTracer r m = (OpenTracing.MonadTracer r m, MonadIO m, MonadMask m)
