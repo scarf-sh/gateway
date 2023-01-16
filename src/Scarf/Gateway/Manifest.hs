@@ -60,25 +60,25 @@ data ManifestRule
   = ManifestDockerRuleV1
       { -- | Package id for this Docker container
         manifestRulePackageId :: !Text,
-        -- | e.g. cr.l5d.io
+        -- | e.g. test.docker.scarf.sh
         manifestRuleDomain :: !Domain,
-        -- | e.g. "linkerd/proxy"
+        -- | e.g. "library/hello-world"
         manifestRuleRepositoryName :: !Text,
-        -- | e.g. docker.io
+        -- | e.g. registry-1.docker.io
         manifestRuleBackendRegistry :: !Text
       }
   | ManifestDockerRuleV2
-      { -- | e.g. cr.l5d.io
+      { -- | e.g. test.docker.scarf.sh
         manifestRuleDomain :: !Domain,
-        -- | e.g. linkerd/*
+        -- | e.g. library/*
         manifestRulePattern :: !ImagePattern.Pattern,
         -- | Id of the corresponding rule in the scarf-server database
         manifestRuleId :: !Text,
-        -- | e.g. docker.io
+        -- | e.g. registry-1.docker.io
         manifestRuleBackendRegistry :: !Text
       }
   | ManifestFileRuleV1
-      { -- | e.g. cr.l5d.io
+      { -- | e.g. test.gateway.scarf.sh
         manifestRuleDomain :: !Domain,
         -- | e.g. /minikube-{platform}-{version}.tar.gz
         manifestRuleIncomingPath :: !URLTemplate,
@@ -89,7 +89,7 @@ data ManifestRule
         manifestRulePackageId :: !Text
       }
   | ManifestPythonRuleV1
-      { -- | e.g. cr.l5d.io
+      { -- | e.g. test.gateway.scarf.sh
         manifestRuleDomain :: !Domain,
         -- | e.g. aca
         manifestRulePackageName :: !Text,

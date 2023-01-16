@@ -76,7 +76,7 @@ runMatch = id
 -- | Rule that matches a particular image and redirects (or proxies)
 -- to a backend registry.
 data DockerRuleV1 = DockerRuleV1
-  { -- | Images matching this rule. e.g. ["linkerd", "proxy"] and their
+  { -- | Images matching this rule. e.g. ["library", "hello-world"] and their
     -- respective package ids.
     ruleImages :: !(HashMap [Text] Text),
     -- | Domain of the registry to redirect (or proxy) to.

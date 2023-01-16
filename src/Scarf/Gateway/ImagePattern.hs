@@ -99,8 +99,8 @@ fromText input =
 -- | Returns the Text represented by a Pattern iff the pattern expands
 -- to exactly one text.
 --
--- >>> isConstPattern "linkerd/proxy" == Just "linkerd/proxy"
--- >>> isConstPattern "linkerd/*" == Nothing
+-- >>> isConstPattern "library/hello-world" == Just "library/hello-world"
+-- >>> isConstPattern "library/*" == Nothing
 isConstPattern :: Pattern -> Maybe Text
 isConstPattern pat = Text.intercalate "/" <$> traverse goGlobs (unPattern pat)
   where
