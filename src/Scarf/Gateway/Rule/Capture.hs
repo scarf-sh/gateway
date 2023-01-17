@@ -1,6 +1,7 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE DerivingStrategies #-}
 
 module Scarf.Gateway.Rule.Capture
   ( RequestId (..),
@@ -8,53 +9,19 @@ module Scarf.Gateway.Rule.Capture
     RuleCapture (..),
     CapturedRequest,
     captureRequest,
-    encodeCapturedRequestToJSON,
   )
 where
 
-import Data.Aeson (Value, toEncoding)
-import Data.Aeson.Encoding
-  ( Encoding,
-    dict,
-    fromEncoding,
-    int,
-    list,
-    null_,
-    pair,
-    pairs,
-    text,
-    unsafeToEncoding,
-    utcTime,
-  )
+import Data.Aeson (Value)
 import Data.Atomics.Counter (incrCounter, newCounter)
 import Data.ByteString (ByteString)
-import Data.ByteString.Builder
-  ( Builder,
-    char7,
-    word64Dec,
-    word64HexFixed,
-  )
-import Data.CaseInsensitive (original)
 import Data.HashMap.Strict (HashMap)
-import Data.HashMap.Strict qualified as HashMap
-import Data.IP (fromHostAddress, fromHostAddress6)
-import Data.List (intersperse)
-import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import Data.Text qualified as Text
-import Data.Text.Encoding (decodeUtf8)
-import Data.Time (UTCTime, defaultTimeLocale, formatTime)
-import Data.Time.Clock.POSIX
-  ( utcTimeToPOSIXSeconds,
-  )
+import Data.Time (UTCTime)
 import Data.Word (Word64)
 import Network.HTTP.Types (Status)
-import Network.HTTP.Types.Header (hReferer)
-import Network.Socket (SockAddr (..))
 import Network.Wai qualified as Wai
-import OpenTracing (SpanContext)
-import OpenTracing.Jaeger.CollectorReporter (jaegerPropagation)
-import OpenTracing.Propagation (TextMap, inject)
 import System.Random (newStdGen, randoms)
 
 -- | Interesting information about a rule match.
@@ -122,34 +89,9 @@ newRequestIdGen = do
 -- scarf-server.
 --
 -- TODO Switch to e.g. thrift encoding using Schema
-data CapturedRequest = CapturedRequest
-  { capturedRequestId :: RequestId,
-    -- | POSIX timstamp of when the request happened.
-    capturedRequestTime :: UTCTime,
-    -- | Useragent of the request.
-    capturedRequestUserAgent :: Text,
-    -- | Referer of the request.
-    capturedRequestReferer :: Text,
-    -- | Concatenation of the raw header lines.
-    capturedRequestRawHeaders :: Text,
-    -- | Request specific info
-    capturedRequest :: Request,
-    -- | Response status
-    capturedResponseStatus :: !Int,
-    -- | Interesting info about a match
-    capturedRequestRuleCapture :: Maybe RuleCapture
-  }
+newtype CapturedRequest = CapturedRequest Text
+  deriving newtype Show
 
--- | HTTP Request specific info that got captured.
-data Request = Request
-  { requestContentType :: Text,
-    requestHost :: Text,
-    requestMethod :: Text,
-    requestUri :: Text,
-    requestQueryString :: Text,
-    requestRemoteAddress :: Text,
-    requestRemotePort :: Text
-  }
 
 -- | Captures all the relevant information for further processing.
 --
@@ -171,162 +113,122 @@ captureRequest ::
   -- to gain further info into the request behavior.
   Maybe RuleCapture ->
   CapturedRequest
-captureRequest time requestId request responseStatus mcapture =
-  CapturedRequest
-    { capturedRequestId =
-        requestId,
-      capturedRequestTime =
-        time,
-      capturedRequestReferer =
-        maybe "" decodeUtf8 (lookup hReferer (Wai.requestHeaders request)),
-      capturedRequestUserAgent =
-        maybe "" decodeUtf8 (Wai.requestHeaderUserAgent request),
-      capturedRequestRawHeaders =
-        decodeUtf8 $
-          mconcat $
-            intersperse
-              "\r\n"
-              [ original header <> ": " <> value
-                | (header, value) <- Wai.requestHeaders request
-              ],
-      capturedRequest =
-        Request
-          { requestContentType =
-              "",
-            requestHost =
-              maybe "" decodeUtf8 (Wai.requestHeaderHost request),
-            requestMethod =
-              decodeUtf8 (Wai.requestMethod request),
-            requestUri =
-              decodeUtf8 (Wai.rawPathInfo request),
-            requestQueryString =
-              decodeUtf8 (Wai.rawQueryString request),
-            requestRemoteAddress = case Wai.remoteHost request of
-              SockAddrInet _ address -> Text.pack $ show (fromHostAddress address)
-              SockAddrInet6 _ _ address _ -> Text.pack $ show (fromHostAddress6 address)
-              SockAddrUnix {} -> "",
-            requestRemotePort = case Wai.remoteHost request of
-              SockAddrInet port _ -> Text.pack (show port)
-              SockAddrInet6 port _ _ _ -> Text.pack (show port)
-              SockAddrUnix {} -> ""
-          },
-      capturedResponseStatus = fromEnum responseStatus,
-      capturedRequestRuleCapture = mcapture
-    }
+captureRequest _time _requestId _request _responseStatus mcapture =
+  CapturedRequest $ Text.pack $ show mcapture
 
--- | Encode a `CapturedRequest` into a form that is backward compatible with
--- the current state of affairs.
-encodeCapturedRequestToJSON ::
-  -- | Information about the trace that captured the request
-  Maybe SpanContext ->
-  -- | An indicator of the region this request was captured. e.g. us-west-2
-  Text ->
-  CapturedRequest ->
-  Builder
-encodeCapturedRequestToJSON spanContext origin CapturedRequest {capturedRequest = Request {..}, ..} =
-  let RequestId a b c = capturedRequestId
-   in fromEncoding $
-        pairs
-          ( pair "!v" (text "1")
-              <> pair "origin" (text origin)
-              <> pair "time" (utcTime capturedRequestTime)
-              <> pair "unixTime" (int (round (utcTimeToPOSIXSeconds capturedRequestTime)))
-              <> pair
-                "request_id"
-                ( unsafeToEncoding
-                    ( char7 '"'
-                        <> word64HexFixed a
-                        <> word64HexFixed b
-                        <> char7 '-'
-                        <> word64Dec c
-                        <> char7 '"'
-                    )
-                )
-              <> pair "request_time" (int 0) --  At this point we don't have
-              -- the overall request time, stubbing out
-              -- for now.
-              <> pair
-                "request"
-                ( pairs
-                    ( pair "method" (text requestMethod)
-                        <> pair "host" (text requestHost)
-                        <> pair "uri" (text requestUri)
-                        <> pair "contentType" (text requestContentType)
-                        <> pair "queryString" (text requestQueryString)
-                        <> pair "remoteAddress" (text requestRemoteAddress)
-                        <> pair "remotePort" (text requestRemotePort)
-                    )
-                )
-              <> pair "responseStatus" (int capturedResponseStatus)
-              <> pair "referer" (text capturedRequestReferer)
-              <> pair "userAgent" (text capturedRequestUserAgent)
-              <> pair "rawHeaders" (text capturedRequestRawHeaders)
-              <> pair "extract" (maybe null_ encodeRuleCaptureToJSON capturedRequestRuleCapture)
-              <> pair "trace" (maybe null_ encodeSpanContextToJSON spanContext)
-              <> pair "partition-key" (text partitionKey)
-          )
-  where
-    -- In order to distribute the logs across all Kafka partitions evenly
-    -- we not only rely on the package type and name in the partition key
-    -- but also include the event date.
-    partitionKey = case capturedRequestRuleCapture of
-      Just DockerCapture {dockerCaptureImage} ->
-        "docker-" <> date <> "-" <> Text.intercalate "/" dockerCaptureImage
-      Just FlatfileCapture {filePackage} ->
-        "file-" <> date <> "-" <> filePackage
-      Just (PixelCapture pixelId) ->
-        "pixel-" <> date <> "-" <> pixelId
-      Just PythonCapture {pythonCapturePackage} ->
-        "python-" <> date <> "-" <> fromMaybe "" pythonCapturePackage
-      Just ScarfJsCapture {scarfJsPackage} ->
-        "scarfjs-" <> date <> "-" <> fromMaybe "" scarfJsPackage
-      Nothing ->
-        "-" <> date
+-- -- | Encode a `CapturedRequest` into a form that is backward compatible with
+-- -- the current state of affairs.
+-- encodeCapturedRequestToJSON ::
+--   -- | Information about the trace that captured the request
+--   Maybe SpanContext ->
+--   -- | An indicator of the region this request was captured. e.g. us-west-2
+--   Text ->
+--   CapturedRequest ->
+--   Builder
+-- encodeCapturedRequestToJSON spanContext origin CapturedRequest {capturedRequest = Request {..}, ..} =
+--   let RequestId a b c = capturedRequestId
+--    in fromEncoding $
+--         pairs
+--           ( pair "!v" (text "1")
+--               <> pair "origin" (text origin)
+--               <> pair "time" (utcTime capturedRequestTime)
+--               <> pair "unixTime" (int (round (utcTimeToPOSIXSeconds capturedRequestTime)))
+--               <> pair
+--                 "request_id"
+--                 ( unsafeToEncoding
+--                     ( char7 '"'
+--                         <> word64HexFixed a
+--                         <> word64HexFixed b
+--                         <> char7 '-'
+--                         <> word64Dec c
+--                         <> char7 '"'
+--                     )
+--                 )
+--               <> pair "request_time" (int 0) --  At this point we don't have
+--               -- the overall request time, stubbing out
+--               -- for now.
+--               <> pair
+--                 "request"
+--                 ( pairs
+--                     ( pair "method" (text requestMethod)
+--                         <> pair "host" (text requestHost)
+--                         <> pair "uri" (text requestUri)
+--                         <> pair "contentType" (text requestContentType)
+--                         <> pair "queryString" (text requestQueryString)
+--                         <> pair "remoteAddress" (text requestRemoteAddress)
+--                         <> pair "remotePort" (text requestRemotePort)
+--                     )
+--                 )
+--               <> pair "responseStatus" (int capturedResponseStatus)
+--               <> pair "referer" (text capturedRequestReferer)
+--               <> pair "userAgent" (text capturedRequestUserAgent)
+--               <> pair "rawHeaders" (text capturedRequestRawHeaders)
+--               <> pair "extract" (maybe null_ encodeRuleCaptureToJSON capturedRequestRuleCapture)
+--               <> pair "trace" (maybe null_ encodeSpanContextToJSON spanContext)
+--               <> pair "partition-key" (text partitionKey)
+--           )
+--   where
+--     -- In order to distribute the logs across all Kafka partitions evenly
+--     -- we not only rely on the package type and name in the partition key
+--     -- but also include the event date.
+--     partitionKey = case capturedRequestRuleCapture of
+--       Just DockerCapture {dockerCaptureImage} ->
+--         "docker-" <> date <> "-" <> Text.intercalate "/" dockerCaptureImage
+--       Just FlatfileCapture {filePackage} ->
+--         "file-" <> date <> "-" <> filePackage
+--       Just (PixelCapture pixelId) ->
+--         "pixel-" <> date <> "-" <> pixelId
+--       Just PythonCapture {pythonCapturePackage} ->
+--         "python-" <> date <> "-" <> fromMaybe "" pythonCapturePackage
+--       Just ScarfJsCapture {scarfJsPackage} ->
+--         "scarfjs-" <> date <> "-" <> fromMaybe "" scarfJsPackage
+--       Nothing ->
+--         "-" <> date
 
-    date =
-      Text.pack $ formatTime defaultTimeLocale "%Y-%m-%d-%H" capturedRequestTime
+--     date =
+--       Text.pack $ formatTime defaultTimeLocale "%Y-%m-%d-%H" capturedRequestTime
 
-encodeSpanContextToJSON :: SpanContext -> Encoding
-encodeSpanContextToJSON context =
-  dict
-    text
-    text
-    HashMap.foldrWithKey
-    (inject jaegerPropagation context :: TextMap)
+-- encodeSpanContextToJSON :: SpanContext -> Encoding
+-- encodeSpanContextToJSON context =
+--   dict
+--     text
+--     text
+--     HashMap.foldrWithKey
+--     (inject jaegerPropagation context :: TextMap)
 
-encodeRuleCaptureToJSON :: RuleCapture -> Encoding
-encodeRuleCaptureToJSON ruleCapture = case ruleCapture of
-  FlatfileCapture {filePackage, fileVariables} ->
-    pairs
-      ( pair "type" (text "flatfile")
-          <> pair "variables" (dict text text HashMap.foldrWithKey fileVariables)
-          <> pair "package" (text filePackage)
-      )
-  DockerCapture {..} ->
-    pairs
-      ( pair "type" (text "docker")
-          <> pair "image" (list text dockerCaptureImage)
-          <> pair "reference" (text dockerCaptureReference)
-          <> pair "backend-registry" (text dockerCaptureBackendRegistry)
-          <> pair "package" (maybe null_ text dockerCapturePackage)
-          <> pair "auto-create" (maybe null_ text dockerCaptureAutoCreate)
-      )
-  PixelCapture pixelId ->
-    pairs
-      ( pair "type" (text "pixel")
-          <> pair "pixel-id" (text pixelId)
-      )
-  PythonCapture {..} ->
-    pairs
-      ( pair "type" (text "python")
-          <> pair "version" (maybe null_ text pythonCaptureVersion)
-          <> pair "package" (maybe null_ text pythonCapturePackage)
-          <> pair "file" (maybe null_ text pythonCaptureFileName)
-          <> pair "backend-url" (maybe null_ text pythonCaptureFileBackendURL)
-      )
-  ScarfJsCapture {..} ->
-    pairs
-      ( pair "type" (text "scarfjs")
-          <> pair "request-body" (toEncoding scarfJsRequestBody)
-          <> pair "package" (maybe null_ text scarfJsPackage)
-      )
+-- encodeRuleCaptureToJSON :: RuleCapture -> Encoding
+-- encodeRuleCaptureToJSON ruleCapture = case ruleCapture of
+--   FlatfileCapture {filePackage, fileVariables} ->
+--     pairs
+--       ( pair "type" (text "flatfile")
+--           <> pair "variables" (dict text text HashMap.foldrWithKey fileVariables)
+--           <> pair "package" (text filePackage)
+--       )
+--   DockerCapture {..} ->
+--     pairs
+--       ( pair "type" (text "docker")
+--           <> pair "image" (list text dockerCaptureImage)
+--           <> pair "reference" (text dockerCaptureReference)
+--           <> pair "backend-registry" (text dockerCaptureBackendRegistry)
+--           <> pair "package" (maybe null_ text dockerCapturePackage)
+--           <> pair "auto-create" (maybe null_ text dockerCaptureAutoCreate)
+--       )
+--   PixelCapture pixelId ->
+--     pairs
+--       ( pair "type" (text "pixel")
+--           <> pair "pixel-id" (text pixelId)
+--       )
+--   PythonCapture {..} ->
+--     pairs
+--       ( pair "type" (text "python")
+--           <> pair "version" (maybe null_ text pythonCaptureVersion)
+--           <> pair "package" (maybe null_ text pythonCapturePackage)
+--           <> pair "file" (maybe null_ text pythonCaptureFileName)
+--           <> pair "backend-url" (maybe null_ text pythonCaptureFileBackendURL)
+--       )
+--   ScarfJsCapture {..} ->
+--     pairs
+--       ( pair "type" (text "scarfjs")
+--           <> pair "request-body" (toEncoding scarfJsRequestBody)
+--           <> pair "package" (maybe null_ text scarfJsPackage)
+--       )

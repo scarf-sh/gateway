@@ -7,6 +7,7 @@ module Scarf.Gateway.Golden (test_gateway_golden) where
 
 import Control.Concurrent (newEmptyMVar, putMVar, takeMVar)
 import Control.Monad (when)
+import Data.ByteString.Builder (stringUtf8)
 import Data.Aeson
   ( FromJSON (..),
     ToJSON (..),
@@ -71,7 +72,6 @@ import Scarf.Gateway.Rule.Capture
   ( CapturedRequest,
     RequestId (RequestId),
     captureRequest,
-    encodeCapturedRequestToJSON,
   )
 import Scarf.Lib.Tracing (nullTracer)
 import System.FilePath (replaceExtension)
@@ -260,6 +260,6 @@ instance ToJSON Output where
         <> pair
           "capture"
           ( unsafeToEncoding
-              ( encodeCapturedRequestToJSON Nothing "test-region" outputCapture
+              ( stringUtf8 $ show outputCapture
               )
           )

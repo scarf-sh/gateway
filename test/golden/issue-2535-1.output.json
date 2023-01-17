@@ -1,34 +1,5 @@
 {
-    "capture": {
-        "!v": "1",
-        "extract": {
-            "package": "a1b331fa-1539-49e5-bdc4-dc8a48e586d1",
-            "type": "flatfile",
-            "variables": {
-                "path": "blah/blah"
-            }
-        },
-        "origin": "test-region",
-        "partition-key": "file-2022-01-11-08-a1b331fa-1539-49e5-bdc4-dc8a48e586d1",
-        "rawHeaders": "Host: somecr.io",
-        "referer": "",
-        "request": {
-            "contentType": "",
-            "host": "somecr.io",
-            "method": "GET",
-            "queryString": "",
-            "remoteAddress": "0.0.0.0",
-            "remotePort": "0",
-            "uri": "/blah/blah"
-        },
-        "request_id": "00000000000000000000000000000000-0",
-        "request_time": 0,
-        "responseStatus": 302,
-        "time": "2022-01-11T08:34:00.914835Z",
-        "trace": null,
-        "unixTime": 1641890041,
-        "userAgent": ""
-    },
+    "capture": "Just (FlatfileCapture {fileAbsoluteUrl = \"https://some.engineering/blah/blah\", fileVariables = fromList [(\"path\",\"blah/blah\")], filePackage = \"a1b331fa-1539-49e5-bdc4-dc8a48e586d1\"})",
     "headers": {
         "Location": "https://some.engineering/blah/blah"
     },

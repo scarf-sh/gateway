@@ -1,34 +1,5 @@
 {
-    "capture": {
-        "!v": "1",
-        "extract": {
-            "backend-url": null,
-            "file": null,
-            "package": null,
-            "type": "python",
-            "version": null
-        },
-        "origin": "test-region",
-        "partition-key": "python-2022-01-11-08-",
-        "rawHeaders": "Host: cool-stuff.io",
-        "referer": "",
-        "request": {
-            "contentType": "",
-            "host": "cool-stuff.io",
-            "method": "GET",
-            "queryString": "",
-            "remoteAddress": "0.0.0.0",
-            "remotePort": "0",
-            "uri": "/simple/"
-        },
-        "request_id": "00000000000000000000000000000000-0",
-        "request_time": 0,
-        "responseStatus": 200,
-        "time": "2022-01-11T08:34:00.914835Z",
-        "trace": null,
-        "unixTime": 1641890041,
-        "userAgent": ""
-    },
+    "capture": "Just (PythonCapture {pythonCapturePackage = Nothing, pythonCaptureVersion = Nothing, pythonCaptureFileName = Nothing, pythonCaptureFileBackendURL = Nothing})",
     "headers": {
         "Content-Length": "118",
         "Content-Type": "text/html",

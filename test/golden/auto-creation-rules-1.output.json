@@ -1,38 +1,5 @@
 {
-    "capture": {
-        "!v": "1",
-        "extract": {
-            "auto-create": "rule-123",
-            "backend-registry": "ghcr.io",
-            "image": [
-                "linkerd",
-                "proxy"
-            ],
-            "package": null,
-            "reference": "latest",
-            "type": "docker"
-        },
-        "origin": "test-region",
-        "partition-key": "docker-2022-01-11-08-linkerd/proxy",
-        "rawHeaders": "Host: cr.l5d.io",
-        "referer": "",
-        "request": {
-            "contentType": "",
-            "host": "cr.l5d.io",
-            "method": "GET",
-            "queryString": "",
-            "remoteAddress": "0.0.0.0",
-            "remotePort": "0",
-            "uri": "/v2/linkerd/proxy/manifests/latest"
-        },
-        "request_id": "00000000000000000000000000000000-0",
-        "request_time": 0,
-        "responseStatus": 307,
-        "time": "2022-01-11T08:34:00.914835Z",
-        "trace": null,
-        "unixTime": 1641890041,
-        "userAgent": ""
-    },
+    "capture": "Just (DockerCapture {dockerCaptureImage = [\"linkerd\",\"proxy\"], dockerCaptureReference = \"latest\", dockerCaptureBackendRegistry = \"ghcr.io\", dockerCapturePackage = Nothing, dockerCaptureAutoCreate = Just \"rule-123\"})",
     "headers": {
         "Location": "https://ghcr.io/v2/linkerd/proxy/manifests/latest",
         "X-This-Request-Was-Proxied": "1"

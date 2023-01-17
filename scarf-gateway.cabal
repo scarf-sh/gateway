@@ -89,8 +89,8 @@ library
     , conduit
     , cryptohash-sha256
     , exceptions
+    , random
     , hashable
-    , hedis
     , http-client
     , http-types
     , iproute
@@ -103,7 +103,6 @@ library
     , opentracing-jaeger
     , opentracing-wai
     , opentracing-zipkin-v2
-    , random
     , resourcet
     , retry
     , stm
@@ -131,7 +130,6 @@ executable scarf-gateway
     , async
     , base
     , bytestring
-    , dhall
     , HsOpenSSL
     , http-client
     , http-client-openssl
@@ -139,7 +137,6 @@ executable scarf-gateway
     , scarf-gateway
     , text
     , time
-    , unordered-containers
     , wai
     , warp
 
@@ -169,7 +166,6 @@ test-suite scarf-gateway-test
     , filepath
     , network-uri
     , scarf-gateway
-    , scarf-lib
     , tasty
     , tasty-golden
     , tasty-hunit

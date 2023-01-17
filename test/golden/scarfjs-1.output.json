@@ -1,37 +1,5 @@
 {
-    "capture": {
-        "!v": "1",
-        "extract": {
-            "package": null,
-            "request-body": {
-                "dependencyInfo": {},
-                "libraryType": "npm",
-                "rawArch": "x86_64",
-                "rawPlatform": "osx"
-            },
-            "type": "scarfjs"
-        },
-        "origin": "test-region",
-        "partition-key": "scarfjs-2022-01-11-08-",
-        "rawHeaders": "Host: scarf.sh",
-        "referer": "",
-        "request": {
-            "contentType": "",
-            "host": "scarf.sh",
-            "method": "POST",
-            "queryString": "",
-            "remoteAddress": "0.0.0.0",
-            "remotePort": "0",
-            "uri": "/package-event/install"
-        },
-        "request_id": "00000000000000000000000000000000-0",
-        "request_time": 0,
-        "responseStatus": 200,
-        "time": "2022-01-11T08:34:00.914835Z",
-        "trace": null,
-        "unixTime": 1641890041,
-        "userAgent": ""
-    },
+    "capture": "Just (ScarfJsCapture {scarfJsRequestBody = Object (fromList [(\"dependencyInfo\",Object (fromList [])),(\"libraryType\",String \"npm\"),(\"rawArch\",String \"x86_64\"),(\"rawPlatform\",String \"osx\")]), scarfJsPackage = Nothing})",
     "headers": {
         "Content-Type": "application/json"
     },
