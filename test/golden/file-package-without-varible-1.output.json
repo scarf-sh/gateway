@@ -1,5 +1,5 @@
 {
-    "capture": "Just (FlatfileCapture {fileAbsoluteUrl = \"https://datausa.io/api/data?drilldowns=Nation&measures=Population\", fileVariables = fromList [], filePackage = \"a1b331fa-1539-49e5-bdc4-dc8a48e586d1\"})",
+    "capture": "FlatfileCapture {fileAbsoluteUrl = \"https://datausa.io/api/data?drilldowns=Nation&measures=Population\", fileVariables = fromList [], filePackage = \"a1b331fa-1539-49e5-bdc4-dc8a48e586d1\"}",
     "headers": {
         "Location": "https://datausa.io/api/data?drilldowns=Nation&measures=Population"
     },

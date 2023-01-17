@@ -1,7 +1,7 @@
 {
-    "capture": "Just (DockerCapture {dockerCaptureImage = [\"linkerd\",\"proxy\"], dockerCaptureReference = \"latest\", dockerCaptureBackendRegistry = \"ghcr.io\", dockerCapturePackage = Nothing, dockerCaptureAutoCreate = Just \"rule-123\"})",
+    "capture": "DockerCapture {dockerCaptureImage = [\"library\",\"proxy\"], dockerCaptureReference = \"latest\", dockerCaptureBackendRegistry = \"ghcr.io\", dockerCapturePackage = Nothing, dockerCaptureAutoCreate = Just \"rule-123\"}",
     "headers": {
-        "Location": "https://ghcr.io/v2/linkerd/proxy/manifests/latest",
+        "Location": "https://ghcr.io/v2/library/proxy/manifests/latest",
         "X-This-Request-Was-Proxied": "1"
     },
     "status": 307

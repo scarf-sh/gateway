@@ -1,5 +1,5 @@
 {
-    "capture": "Just (ScarfJsCapture {scarfJsRequestBody = Object (fromList [(\"dependencyInfo\",Object (fromList [])),(\"libraryType\",String \"npm\"),(\"rawArch\",String \"x86_64\"),(\"rawPlatform\",String \"osx\")]), scarfJsPackage = Nothing})",
+    "capture": "ScarfJsCapture {scarfJsRequestBody = Object (fromList [(\"dependencyInfo\",Object (fromList [])),(\"libraryType\",String \"npm\"),(\"rawArch\",String \"x86_64\"),(\"rawPlatform\",String \"osx\")]), scarfJsPackage = Nothing}",
     "headers": {
         "Content-Type": "application/json"
     },

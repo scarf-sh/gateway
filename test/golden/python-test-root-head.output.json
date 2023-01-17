@@ -1,5 +1,5 @@
 {
-    "capture": "Just (PythonCapture {pythonCapturePackage = Nothing, pythonCaptureVersion = Nothing, pythonCaptureFileName = Nothing, pythonCaptureFileBackendURL = Nothing})",
+    "capture": "PythonCapture {pythonCapturePackage = Nothing, pythonCaptureVersion = Nothing, pythonCaptureFileName = Nothing, pythonCaptureFileBackendURL = Nothing}",
     "headers": {
         "Content-Length": "81",
         "Content-Type": "text/html",

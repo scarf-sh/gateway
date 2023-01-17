@@ -1,5 +1,5 @@
 {
-    "capture": "Just (PixelCapture \"12345\")",
+    "capture": "PixelCapture \"12345\"",
     "headers": {
         "Cache-control": "no-cache, no-store, must-revalidate",
         "Content-Length": "24",

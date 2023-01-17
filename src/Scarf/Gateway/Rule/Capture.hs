@@ -114,7 +114,7 @@ captureRequest ::
   Maybe RuleCapture ->
   CapturedRequest
 captureRequest _time _requestId _request _responseStatus mcapture =
-  CapturedRequest $ Text.pack $ show mcapture
+  CapturedRequest $ Text.pack $ maybe "" show mcapture
 
 -- -- | Encode a `CapturedRequest` into a form that is backward compatible with
 -- -- the current state of affairs.

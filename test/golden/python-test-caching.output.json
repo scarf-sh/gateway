@@ -1,5 +1,5 @@
 {
-    "capture": "Just (PythonCapture {pythonCapturePackage = Nothing, pythonCaptureVersion = Nothing, pythonCaptureFileName = Nothing, pythonCaptureFileBackendURL = Nothing})",
+    "capture": "PythonCapture {pythonCapturePackage = Nothing, pythonCaptureVersion = Nothing, pythonCaptureFileName = Nothing, pythonCaptureFileBackendURL = Nothing}",
     "headers": {
         "etag": "\"agnhjMSIWv0_F5FCrBDmit2jdkTb4QLM7v4tnUKUs-U=\""
     },

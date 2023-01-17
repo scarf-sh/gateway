@@ -1,5 +1,5 @@
 {
-    "capture": "Just (DockerCapture {dockerCaptureImage = [\"someengineering\",\"resotoshell\"], dockerCaptureReference = \"latest\", dockerCaptureBackendRegistry = \"ghcr.io\", dockerCapturePackage = Just \"bd06145b-3f32-4f36-9755-69b3dfb6e71d\", dockerCaptureAutoCreate = Nothing})",
+    "capture": "DockerCapture {dockerCaptureImage = [\"someengineering\",\"resotoshell\"], dockerCaptureReference = \"latest\", dockerCaptureBackendRegistry = \"ghcr.io\", dockerCapturePackage = Just \"bd06145b-3f32-4f36-9755-69b3dfb6e71d\", dockerCaptureAutoCreate = Nothing}",
     "headers": {
         "Location": "https://ghcr.io/v2/someengineering/resotoshell/manifests/latest",
         "X-This-Request-Was-Proxied": "1"

@@ -281,7 +281,7 @@ test_gateway_docker_rule_v1 =
                 }
             )
 
-      (response4, capture) <- request "test.scarf.sh" "/v2/linkerd/proxy/manifests/latest"
+      (response4, capture) <- request "test.scarf.sh" "/v2/library/nginx/manifests/latest"
       assertStatus 404 response4
 
       liftIO $ capture @?= Nothing
@@ -343,7 +343,7 @@ test_gateway_docker_rule_v1_proxied =
                 }
             )
 
-      (response4, capture) <- request "test.scarf.sh" "/v2/linkerd/proxy/manifests/latest"
+      (response4, capture) <- request "test.scarf.sh" "/v2/library/nginx/manifests/latest"
       assertStatus 404 response4
 
       liftIO $ capture @?= Nothing
@@ -354,7 +354,7 @@ test_gateway_docker_rule_v2 =
     "Gateway, Docker Pull (with auto package creation)"
     ( newGatewayConfig
         [ ( "test.scarf.sh",
-            [ newDockerRuleV2 "test-rule-1" "linkerd/*" "docker.io"
+            [ newDockerRuleV2 "test-rule-1" "library/*" "docker.io"
             ]
           )
         ]
@@ -378,17 +378,17 @@ test_gateway_docker_rule_v2 =
       (response2, _) <- request "test.scarf.sh" "/v2/"
       assertRedirect "https://docker.io/v2/" response2
 
-      (response3, _) <- request "test.scarf.sh" "/v2/library/hello-world/manifests/latest"
+      (response3, _) <- request "test.scarf.sh" "/v2/something/hello-world/manifests/latest"
       assertStatus 404 response3
 
-      (response4, capture) <- request "test.scarf.sh" "/v2/linkerd/proxy/manifests/latest"
-      assertRedirect "https://docker.io/v2/linkerd/proxy/manifests/latest" response4
+      (response4, capture) <- request "test.scarf.sh" "/v2/library/nginx/manifests/latest"
+      assertRedirect "https://docker.io/v2/library/nginx/manifests/latest" response4
 
       liftIO $
         capture
           @?= Just
             ( DockerCapture
-                { dockerCaptureImage = ["linkerd", "proxy"],
+                { dockerCaptureImage = ["library", "nginx"],
                   dockerCaptureReference = "latest",
                   dockerCaptureBackendRegistry = "docker.io",
                   dockerCapturePackage = Nothing,
@@ -396,14 +396,14 @@ test_gateway_docker_rule_v2 =
                 }
             )
 
-      (response5, capture) <- request "test.scarf.sh" "/v2/linkerd/proxy-init/manifests/1.0"
-      assertRedirect "https://docker.io/v2/linkerd/proxy-init/manifests/1.0" response5
+      (response5, capture) <- request "test.scarf.sh" "/v2/library/redis/manifests/1.0"
+      assertRedirect "https://docker.io/v2/library/redis/manifests/1.0" response5
 
       liftIO $
         capture
           @?= Just
             ( DockerCapture
-                { dockerCaptureImage = ["linkerd", "proxy-init"],
+                { dockerCaptureImage = ["library", "redis"],
                   dockerCaptureReference = "1.0",
                   dockerCaptureBackendRegistry = "docker.io",
                   dockerCapturePackage = Nothing,
@@ -446,13 +446,13 @@ test_gateway_manifest =
     "Gateway, with rules coming from a manifest"
     (gatewayConfigFromManifest "test/test-manifest-1.json")
     $ \request -> do
-      (response1, capture) <- request "alexbiehl2.docker.scarf53.sh" "/v2/linkerd/proxy/manifests/latest"
-      assertRedirect "https://docker.io/v2/linkerd/proxy/manifests/latest" response1
+      (response1, capture) <- request "alexbiehl2.docker.scarf53.sh" "/v2/library/proxy/manifests/latest"
+      assertRedirect "https://docker.io/v2/library/proxy/manifests/latest" response1
       liftIO $
         capture
           @?= Just
             ( DockerCapture
-                { dockerCaptureImage = ["linkerd", "proxy"],
+                { dockerCaptureImage = ["library", "proxy"],
                   dockerCaptureReference = "latest",
                   dockerCaptureBackendRegistry = "docker.io",
                   dockerCapturePackage = Nothing,
@@ -460,13 +460,13 @@ test_gateway_manifest =
                 }
             )
 
-      (response2, capture) <- request "dysinger.docker.scarf53.sh" "/v2/linkerd/controller/manifests/latest"
-      assertRedirect "https://ghcr.io/v2/linkerd/controller/manifests/latest" response2
+      (response2, capture) <- request "dysinger.docker.scarf53.sh" "/v2/library/controller/manifests/latest"
+      assertRedirect "https://ghcr.io/v2/library/controller/manifests/latest" response2
       liftIO $
         capture
           @?= Just
             ( DockerCapture
-                { dockerCaptureImage = ["linkerd", "controller"],
+                { dockerCaptureImage = ["library", "controller"],
                   dockerCaptureReference = "latest",
                   dockerCaptureBackendRegistry = "ghcr.io",
                   dockerCapturePackage = Just "aaf2ec15-5244-484b-845a-ffd559e5f802",
@@ -502,13 +502,13 @@ test_gateway_manifest =
                 }
             )
 
-      (response5, capture) <- request "ctl.flyte.org" "/install"
-      assertRedirect "https://raw.githubusercontent.com/flyteorg/flytectl/master/install.sh" response5
+      (response5, capture) <- request "ctl.test.org" "/install"
+      assertRedirect "https://raw.githubusercontent.com/testorg/testctl/master/install.sh" response5
       liftIO $
         capture
           @?= Just
             ( FlatfileCapture
-                { fileAbsoluteUrl = "https://raw.githubusercontent.com/flyteorg/flytectl/master/install.sh",
+                { fileAbsoluteUrl = "https://raw.githubusercontent.com/testorg/testctl/master/install.sh",
                   fileVariables = HashMap.empty,
                   filePackage = "aaf2ec15-5244-484b-845a-ffd559e5f802"
                 }

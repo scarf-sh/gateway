@@ -1,10 +1,10 @@
-path: /v2/linkerd/proxy/manifests/latest
+path: /v2/library/proxy/manifests/latest
 headers: 
-  Host: cr.l5d.io
+  Host: cr.test.io
 manifest:
   rules:
     - type:  docker-v2
-      domain: cr.l5d.io
+      domain: cr.test.io
       registry: ghcr.io
       rule-id: rule-123
-      pattern: "linkerd/*"
+      pattern: "library/*"

@@ -15,15 +15,15 @@
             "type": "docker-v1"
         },
         {
-            "repository-name": "linuxserver/qbittorrent",
-            "domain": "lscr.io",
+            "repository-name": "testserver/qbittorrent",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "bda3c93f-325d-4bba-9edb-1a3b824281e0",
             "type": "docker-v1"
         },
         {
-            "repository-name": "flyteorg/flytelab",
-            "domain": "cr.flyte.org",
+            "repository-name": "testorg/testlb",
+            "domain": "cr.test.org",
             "registry": "ghcr.io",
             "package-id": "e7a4deee-295c-4d8c-9adf-402e2a1991d6",
             "type": "docker-v1"
@@ -50,8 +50,8 @@
             "type": "docker-v1"
         },
         {
-            "repository-name": "flyteorg/flytescheduler",
-            "domain": "cr.flyte.org",
+            "repository-name": "testorg/testscheduler",
+            "domain": "cr.test.org",
             "registry": "ghcr.io",
             "package-id": "7573cd29-ca71-4f4d-99d3-54b637912749",
             "type": "docker-v1"
@@ -78,29 +78,29 @@
             "type": "docker-v1"
         },
         {
-            "repository-name": "linuxserver/tester",
-            "domain": "lscr.io",
+            "repository-name": "testserver/tester",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "b9a5332f-2b66-4282-b4e2-a8de7f8cd74a",
             "type": "docker-v1"
         },
         {
-            "repository-name": "linuxserver/readarr",
-            "domain": "lscr.io",
+            "repository-name": "test/readarr",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "998fe1aa-8401-44b5-9c72-1ccfe47a40eb",
             "type": "docker-v1"
         },
         {
-            "repository-name": "linuxserver/baseimage-guacgui",
-            "domain": "lscr.io",
+            "repository-name": "testserver/baseimage-guacgui",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "c21138a5-b074-4d30-bd31-629fe13779a8",
             "type": "docker-v1"
         },
         {
-            "repository-name": "linkerd/proxy-init",
-            "domain": "linkerd-test.avi.press",
+            "repository-name": "test/proxy-init",
+            "domain": "test-test.avi.press",
             "registry": "ghcr.io",
             "package-id": "2d444f6e-8d15-438d-8aa6-e68b19767651",
             "type": "docker-v1"
@@ -169,15 +169,15 @@
             "type": "docker-v1"
         },
         {
-            "repository-name": "linuxserver/babybuddy",
-            "domain": "lscr.io",
+            "repository-name": "testserver/babybuddy",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "a3fa6480-1454-45c0-96c2-6875fffd5463",
             "type": "docker-v1"
         },
         {
             "repository-name": "olix0r/ort",
-            "domain": "cr.l5d.io",
+            "domain": "cr.test.io",
             "registry": "ghcr.io",
             "package-id": "4b032bbe-8233-4d45-ad78-35c30e993565",
             "type": "docker-v1"
@@ -190,91 +190,91 @@
             "type": "docker-v1"
         },
         {
-            "repository-name": "linkerd/controller",
-            "domain": "cr.l5d.io",
+            "repository-name": "test/controller",
+            "domain": "cr.test.io",
             "registry": "ghcr.io",
             "package-id": "e54c3290-25a1-48b9-b0eb-e45a82f3e9bb",
             "type": "docker-v1"
         },
         {
-            "repository-name": "linkerd/web",
-            "domain": "cr.l5d.io",
+            "repository-name": "test/web",
+            "domain": "cr.test.io",
             "registry": "ghcr.io",
             "package-id": "9ca03f50-5d7e-4ce7-8acd-45fd6115e212",
             "type": "docker-v1"
         },
         {
-            "repository-name": "linkerd/grafana",
-            "domain": "cr.l5d.io",
+            "repository-name": "test/grafana",
+            "domain": "cr.test.io",
             "registry": "ghcr.io",
             "package-id": "68210b12-233f-407c-8ac0-0dea5fb7bb1c",
             "type": "docker-v1"
         },
         {
-            "repository-name": "linkerd/metrics-api",
-            "domain": "cr.l5d.io",
+            "repository-name": "test/metrics-api",
+            "domain": "cr.test.io",
             "registry": "ghcr.io",
             "package-id": "d02b8f0f-684d-4da9-aafd-0489a9ba3f70",
             "type": "docker-v1"
         },
         {
-            "repository-name": "linkerd/jaeger-webhook",
-            "domain": "cr.l5d.io",
+            "repository-name": "test/jaeger-webhook",
+            "domain": "cr.test.io",
             "registry": "ghcr.io",
             "package-id": "8eb65657-8d0c-404d-b8e2-176df09c738e",
             "type": "docker-v1"
         },
         {
-            "repository-name": "linkerd/tap",
-            "domain": "cr.l5d.io",
+            "repository-name": "test/tap",
+            "domain": "cr.test.io",
             "registry": "ghcr.io",
             "package-id": "b9ef5677-64ee-4104-b466-8b57daf89d14",
             "type": "docker-v1"
         },
         {
-            "repository-name": "linkerd/proxy",
-            "domain": "cr.l5d.io",
+            "repository-name": "test/proxy",
+            "domain": "cr.test.io",
             "registry": "ghcr.io",
             "package-id": "8717953c-3452-4ef7-9a14-b64dc19163b4",
             "type": "docker-v1"
         },
         {
-            "repository-name": "linkerd/proxy-init",
-            "domain": "cr.l5d.io",
+            "repository-name": "test/proxy-init",
+            "domain": "cr.test.io",
             "registry": "ghcr.io",
             "package-id": "4f732f81-3505-4307-80f4-41e7113dc5cd",
             "type": "docker-v1"
         },
         {
-            "repository-name": "linkerd/cli-bin",
-            "domain": "cr.l5d.io",
+            "repository-name": "test/cli-bin",
+            "domain": "cr.test.io",
             "registry": "ghcr.io",
             "package-id": "0ccfec28-f109-4cbc-be6c-4f80b02d00cb",
             "type": "docker-v1"
         },
         {
-            "repository-name": "linkerd/debug",
-            "domain": "cr.l5d.io",
+            "repository-name": "test/debug",
+            "domain": "cr.test.io",
             "registry": "ghcr.io",
             "package-id": "624f45db-b7db-4528-b477-a304bb0c6128",
             "type": "docker-v1"
         },
         {
-            "repository-name": "linkerd/cni-plugin",
-            "domain": "cr.l5d.io",
+            "repository-name": "test/cni-plugin",
+            "domain": "cr.test.io",
             "registry": "ghcr.io",
             "package-id": "56327dcd-076b-42f2-abac-8bcea27d2828",
             "type": "docker-v1"
         },
         {
-            "repository-name": "linuxserver/baseimage-alpine-nginx",
-            "domain": "lscr.io",
+            "repository-name": "testserver/baseimage-alpine-nginx",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "9efaa8f3-faaa-4f5e-8690-328588a66fbe",
             "type": "docker-v1"
         },
         {
-            "repository-name": "linkerd/namerctl",
+            "repository-name": "testnamerctl",
             "domain": "alexbiehl.scarf.sh",
             "registry": "registry-1.docker.io",
             "package-id": "284a42d1-eb12-4fd7-914e-41c1293c4051",
@@ -309,8 +309,8 @@
             "type": "docker-v1"
         },
         {
-            "repository-name": "linkerd/smi-adaptor",
-            "domain": "cr.l5d.io",
+            "repository-name": "testsmi-adaptor",
+            "domain": "cr.test.io",
             "registry": "ghcr.io",
             "package-id": "89f32afb-b3ca-497e-aab7-25f604976f49",
             "type": "docker-v1"
@@ -351,7 +351,7 @@
             "type": "docker-v1"
         },
         {
-            "repository-name": "linkerd/aviscontainer",
+            "repository-name": "testaviscontainer",
             "domain": "alexbiehl.scarf.sh",
             "registry": "registry-1.docker.io",
             "package-id": "620194ee-42e8-48db-8d2a-7af858ec11ae",
@@ -359,28 +359,28 @@
         },
         {
             "repository-name": "linuxserver/baseimage-ubuntu",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "1725def0-a1eb-4a9b-b85c-2f28a59d5a60",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/baseimage-rdesktop-web",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "2ec3802d-0a33-4a19-8d6d-89ae5d560302",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/baseimage-alpine-python",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "30683493-da65-421f-9897-a0b9f7ff6b14",
             "type": "docker-v1"
         },
         {
-            "repository-name": "linkerd/policy-controller",
-            "domain": "cr.l5d.io",
+            "repository-name": "testpolicy-controller",
+            "domain": "cr.test.io",
             "registry": "ghcr.io",
             "package-id": "91b6cc5e-ad68-4341-90c9-5e9d7bfe9243",
             "type": "docker-v1"
@@ -401,14 +401,14 @@
         },
         {
             "repository-name": "linuxserver/phpmyadmin",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "c50ef12e-b7a7-4b49-93ca-9768fc5d664e",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/baseimage-rdesktop",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "8e3de4cd-1f58-4845-9c1d-4e9f8400dbac",
             "type": "docker-v1"
@@ -576,112 +576,112 @@
         },
         {
             "repository-name": "linuxserver/paperless-ng",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "a7afb622-3ce8-4263-80eb-150ed317d036",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/baseimage-arch",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "099f8b0b-364c-4a5f-af9d-face97726a5b",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/baseimage-cloud9",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "4498c6f4-d671-41fa-94ed-1f12727393fa",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/adguardhome-sync",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "d52c85f7-8c79-4669-8b4c-43cb991c0fc6",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/airsonic",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "a68cdea9-d81a-41a9-a9c2-157108216b8d",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/apprise-api",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "86ff0f49-d619-4645-8817-59706be39264",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/audacity",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "0da90563-16b0-438f-93a5-443de3c2b180",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/bazarr",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "9bbcffe7-7a02-4876-978f-898e2c659b34",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/beets",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "3b7245ca-0a5d-49a7-ab8f-94d52bbb80e3",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/boinc",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "a3875730-1bbc-4f57-a038-bce1345deb13",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/booksonic",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "98c1da9f-3054-4cf3-8413-980c78478645",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/booksonic-air",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "64bb02e5-53d4-45c1-9df6-0ae7514154d3",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/bookstack",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "775c6d62-8898-46d5-babe-b9c420d2ae99",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/calibre",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "c29c80ad-590e-42d3-ba55-558f535738d5",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/calibre-web",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "e21e3ab7-0d01-410b-be26-a79c35b111b1",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/cardigann",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "7ced82a0-f2a7-4b0b-a3b9-bbeab6ee1aea",
             "type": "docker-v1"
@@ -702,301 +702,301 @@
         },
         {
             "repository-name": "linuxserver/chevereto",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "5c3f59ab-9210-48db-8730-3b6d2f4a49d3",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/clarkson",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "8a9d7ef3-5995-45ab-848e-edeebfc248ca",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/cloud9",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "1444cff6-4dd9-4011-b9d0-54c5ab64c2d6",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/code-server",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "7c9b9d8f-3a2a-466a-9fcc-f6ed7ab928a1",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/codiad",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "c77dc30f-f995-467a-9c4b-a0a711b50b76",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/codimd",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "b82f0193-e466-45e3-ba49-ce59f1cfa6ee",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/cops",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "a7f5f26b-aa7c-4f7c-8a6c-0efbaf7ca078",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/couchpotato",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "957b8bbb-50d2-4419-aca8-6cf0ab0f53ab",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/daapd",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "fc152417-fff9-41b5-856d-0b3d3d0ba188",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/darktable",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "92b5c78c-200a-4f71-b027-8f02deafc485",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/davos",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "11d0f14f-15b7-49d1-bb40-3a2cbef78c29",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/ddclient",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "e53a3408-0e1f-4791-a96c-f8c458892b88",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/deluge",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "16841303-6a4f-485b-9127-e566e8cb356d",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/digikam",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "80c73018-631d-413c-b881-6b995fb6bd23",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/dillinger",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "f530fd66-4464-488b-bf3c-c850c6eda901",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/diskover",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "b1e00da4-e261-441a-a3ce-2592d526c11d",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/docker-compose",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "20e128af-b596-40e5-923f-ef49ba3d969a",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/dokuwiki",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "abe93ba4-aa48-4dea-bc5a-537f3cfb9e8f",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/domoticz",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "fd9f088e-85c3-4dfb-8c41-2917e11d57dc",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/doublecommander",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "f4d56968-8559-42e0-b6d9-b63cb3ef0b1f",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/duckdns",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "f6dbdf3d-0323-4356-9bf7-0070ff9b6fad",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/ffmpeg",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "48c025f7-5a0a-4dae-a1bd-e6dfdff52705",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/firefox",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "690cb603-ad89-4af7-87ce-9ccd0ecc9171",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/foldingathome",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "8eb37719-9214-4892-8308-f24135449a3c",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/freshrss",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "cd804155-691d-4133-91da-eb73b4724ec9",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/grav",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "a9471f32-0ffe-485e-8ef3-642834593682",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/guacd",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "eb3c7e2b-4a77-4d12-8c14-3cbe8947efae",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/headphones",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "86195ea4-d4e8-42eb-8052-7215c7eec909",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/healthchecks",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "eb105998-a129-40f0-9ad1-a626e7ed3776",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/duplicati",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "75ff00ef-1575-40e5-a4db-ff90a5eba80c",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/emby",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "7a3ae258-6623-4cfc-a5da-40249656f1a7",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/embystat",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "d2661f0c-61c9-4493-8d50-c2bdf0434613",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/endlessh",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "fdb5cbd0-7833-499b-b670-52cbfc0beac0",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/filezilla",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "8a8b39c6-50a9-4655-8b79-7696e29d50c0",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/fleet",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "2478c737-94a1-4b0c-ba35-07f121d96dd3",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/gazee",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "cb3b841e-f967-4fa9-9e19-d417e7a8ab47",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/grocy",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "61f84ada-ea60-4391-b3cc-2c6edf3be7c8",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/habridge",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "9b38be4b-8794-4158-a6c2-5f1dc73b9c42",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/hedgedoc",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "0d1ef137-d1f5-43ce-bdaf-f6ae5811c809",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/heimdall",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "e110fa25-6bc4-4c4b-92c8-76930d92f762",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/homeassistant",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "509babd5-8330-4517-bed4-bc105c923fbd",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/jenkins-builder",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "14d157c2-b153-4d58-8415-12c2cbd8dc33",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/kanzi",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "b42a6827-6544-4097-92f1-eeb9e80038a2",
             "type": "docker-v1"
@@ -1017,406 +1017,406 @@
         },
         {
             "repository-name": "linuxserver/htpcmanager",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "cbef2197-c690-487e-b4cd-e55da19056fc",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/hydra",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "1eee0aa0-083b-4c59-91cd-e57d3a148278",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/hydra2",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "92514aa4-5e36-4b45-a460-e770e07e4732",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/ipfs",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "559f9c19-b2e9-4a97-b778-6fe2f6bc3a2b",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/jackett",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "6f765f24-14e3-40e1-99be-98743c85dc3f",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/jellyfin",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "77d54cd8-9876-4230-8e54-d68191df9f9b",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/kodi-headless",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "efa094bd-9c1d-4fde-88c0-7ec0282f4a77",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/lazylibrarian",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "9d5fe594-aaef-4502-b425-62268b7e03df",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/ldap-auth",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "95f230cd-b763-4e6a-963b-34c30581d9da",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/letsencrypt",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "e86015db-5c01-4a95-8b13-59522aea0913",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/libreoffice",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "f188387b-9ae2-439c-b653-239c66819467",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/libresonic",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "1b03d63a-028f-4934-acd5-cc2b673e31a0",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/librespeed",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "cf5d5314-2908-47a7-aa0f-a5b48276cb78",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/lidarr",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "83d53583-1520-42d9-a1bf-1c8177134de2",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/limnoria",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "2277fbd8-d023-4216-b616-c0f11deb3873",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/lychee",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "ab9042f8-bc72-4cfd-863e-fe4a6624c9e0",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/mariadb",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "f33b128c-117a-4d58-820b-0da640239c46",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/medusa",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "a4646859-0379-44d6-8c23-4d32c55e2fb2",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/minetest",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "462ab5ed-914b-4ee1-a1a0-dbd956eeec55",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/minisatip",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "3e3a593b-0d96-4479-9b2d-2c68726cb202",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/mods",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "df8fa0cf-1f0b-462d-9629-7de6ddec7e4e",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/mstream",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "88c642a6-3201-4cbe-ad5a-faab4f5a28d8",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/musicbrainz",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "5b50d4c5-2e63-40ea-9a6a-e2830daddc3b",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/muximux",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "e22f4d1d-69c7-420a-86d0-0d966b5b856c",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/mylar",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "92e11b0d-89d8-4db2-987b-9d7c472263e8",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/mylar3",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "e8b2bfbb-d2c3-44da-9869-bae2e943b0b1",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/mysql-workbench",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "64d4ba84-27b1-4e72-bfad-bce77cd90a8c",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/nano",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "38fd4941-d5bd-42ff-911c-9077d8c1f614",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/nano-wallet",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "f9360532-074d-4eeb-a202-cd2310793157",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/netbootxyz",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "9934bec5-f8a7-4985-b963-d0b42c229faa",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/netbox",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "68421300-20b9-4c96-9749-7b467b14d527",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/nextcloud",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "f8158f0d-571e-4233-be54-c1ef02bcddfa",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/nginx",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "a2d0b89e-ca6d-44bc-ac01-deb934210761",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/ngircd",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "38755639-5edf-458a-8786-7196e2997a41",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/nntp2nntp",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "b44c945d-12ed-4e4c-a256-debf86025fbd",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/nzbget",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "68ed0c28-d8b2-4583-9670-9fe808b90a2d",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/nzbhydra2",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "9d3353c3-0b64-48da-852e-8c316e49d4a3",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/ombi",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "58d86df1-7951-4a41-bd2d-0c8ee85389b9",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/openssh-server",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "fc40bcf4-cb38-4e8e-9502-f9850990c8b8",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/openvpn-as",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "85cd4f33-d78f-435e-8581-b00150f2cb30",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/organizr",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "97299185-6dda-4724-a03b-080a2eaeed6b",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/oscam",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "9b1ed47e-0df4-4e81-826c-1078029399b0",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/papermerge",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "d31267fc-f001-4290-ac51-1c93c939c08a",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/photoshow",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "76548545-bd61-48fe-87b6-5c592b88a8ef",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/pidgin",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "28f59072-7e2a-4ef5-b7cc-c84c95bac546",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/piwigo",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "2787c6dc-b89a-4c6f-a92d-41bf2085a481",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/projectsend",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "02cbac14-fe76-4200-9b57-1f3857bd61f1",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/pylon",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "58f0b049-486b-4c72-9f99-e3bb21cc2024",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/quassel-core",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "a0301a68-4834-49f4-8919-3f38d1aa2847",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/radarr",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "75917a34-d74d-4737-891c-23e69d69bc08",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/raneto",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "ea82ae69-e832-4a4d-91e9-8f67f72125c7",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/rdesktop",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "d56419ab-9b86-4a74-b3d3-903a1e77452d",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/sabnzbd",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "3ba0f528-e20e-4b76-ba12-93dc8e60af47",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/sickgear",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "51954241-659d-4bcd-87aa-897accebb4f7",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/snapdrop",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "439097ef-af96-4ce6-a140-771b58c2f656",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/sqlitebrowser",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "c4a771cf-41c8-499f-9aa0-4a0964b48fbe",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/thelounge",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "87f611ce-5e35-4745-b18d-a95bb4df95d4",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/transmission",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "cc036633-7f4c-4b5a-8ea1-2a8826e1b6a9",
             "type": "docker-v1"
@@ -1430,238 +1430,238 @@
         },
         {
             "repository-name": "linuxserver/overseerr",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "f19bf1ca-5ebd-4f4b-84ae-82bfa9ff7a22",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/pixapop",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "d7688122-6f2e-4f10-8130-547da4859103",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/plex",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "adf0cffe-62b4-471e-8b2a-2fc3548a358b",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/pwndrop",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "6945267f-8434-46c4-a468-1e16ad69261f",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/pydio",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "bed06c90-fe60-405f-b005-9441a44200c0",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/pydio-cells",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "3458c314-c1a5-4e2c-849c-d46c63c87b9d",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/pyload",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "3fd94054-8bbc-4afb-a811-af3aba6b6e74",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/quassel-web",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "2d04b23b-3444-4865-8d0c-cdb99badabf2",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/remmina",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "8956f7a6-7437-4e9a-b881-058c751a975a",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/requestrr",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "ded35d7d-a56b-44c7-bc6d-2ba7d028bdeb",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/resilio-sync",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "4c0dc79d-000c-4676-a704-7a48b8351a48",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/rsnapshot",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "c7e7a091-f6d7-4d44-ad16-dc3403b96b0e",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/rutorrent",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "55d836d7-055d-4d35-a2e7-0a4aa11c1163",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/scrutiny",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "0eec9c99-1068-4b68-88f1-034b4b6a98af",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/sickchill",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "f62fbffd-5ecb-47e3-b999-d515dd4430af",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/smokeping",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "bf219c1c-871d-4510-b492-f8546bc57ee9",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/snipe-it",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "df52feb4-69c4-49f4-92b2-b4844331652a",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/sonarr",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "19397111-4942-4975-b77c-f98f2765c293",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/swag",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "a0b63340-f2fa-454f-b82c-ca452d211a74",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/synclounge",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "22a834f6-1d63-45df-95ac-c0114eb3f552",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/syncthing",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "a2510610-4aaa-4968-b94c-511a9ec278dd",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/syslog-ng",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "9a6b4d4b-1c5c-4bcf-af0f-70a6c99d3663",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/taisun",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "a0822b5a-e0cb-4d51-b5be-1e7aa817ca3e",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/tautulli",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "b96169fb-d2d0-46e3-ba67-084e5e9b42ad",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/tvheadend",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "6b6be416-850c-40b2-a645-fd7c83f20b8e",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/ubooquity",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "5c3ee2e0-2559-4736-ad69-2fb44470495d",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/unifi-controller",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "b360b053-5385-4263-9ad7-e5a9f9a22740",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/webgrabplus",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "dbaeb772-b3b1-4f52-a660-5c896ee83379",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/webtop",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "9d87a583-2dc8-4160-a717-061667112d68",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/wikijs",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "9b4e987e-4773-4b13-b1fe-691813aa8d85",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/wireguard",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "ad72ea8e-2a5e-4a90-a535-db9912477e03",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/wireshark",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "16d3aae0-d069-411f-8191-15ce5ac96e1e",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/yq",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "c86fb769-90fe-41d2-99aa-57cc3b791e12",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/znc",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "71ebc303-48fa-4d9e-ad09-4ab36019ce23",
             "type": "docker-v1"
@@ -1773,14 +1773,14 @@
         },
         {
             "repository-name": "linuxserver/baseimage-mono",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "2f9c09db-5e25-4023-95ac-552632249783",
             "type": "docker-v1"
         },
         {
             "repository-name": "linuxserver/prowlarr",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "b6bf64be-0459-42a2-b8a6-a6fa72fa4a4d",
             "type": "docker-v1"
@@ -1800,7 +1800,7 @@
             "type": "docker-v1"
         },
         {
-            "repository-name": "linkerd/alextest1",
+            "repository-name": "test/alextest1",
             "domain": "alexbiehl.scarf.sh",
             "registry": "registry-1.docker.io",
             "package-id": "b9d19ce2-7e8e-4302-aada-ee22f827b39d",
@@ -1815,7 +1815,7 @@
         },
         {
             "repository-name": "linuxserver/baseimage-gui",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "49d2cc89-c4e4-4f4b-b43e-8784e4a6a32c",
             "type": "docker-v1"
@@ -1920,21 +1920,21 @@
         },
         {
             "repository-name": "buoyantio/emojivoto-emoji-svc",
-            "domain": "docker.l5d.io",
+            "domain": "docker.test.io",
             "registry": "registry-1.docker.io",
             "package-id": "59512bce-d606-477c-811c-6ea6583c23d9",
             "type": "docker-v1"
         },
         {
             "repository-name": "buoyantio/emojivoto-voting-svc",
-            "domain": "docker.l5d.io",
+            "domain": "docker.test.io",
             "registry": "registry-1.docker.io",
             "package-id": "4c5944c4-391f-4662-ac3f-c8d74394880a",
             "type": "docker-v1"
         },
         {
             "repository-name": "buoyantio/emojivoto-web",
-            "domain": "docker.l5d.io",
+            "domain": "docker.test.io",
             "registry": "registry-1.docker.io",
             "package-id": "b5fee4fb-035f-433c-ab0d-a83015a09956",
             "type": "docker-v1"
@@ -2459,7 +2459,7 @@
         },
         {
             "repository-name": "linuxserver/baseimage-alpine",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "1fcaed47-f4a5-4231-9514-46791656e1a1",
             "type": "docker-v1"
@@ -2515,7 +2515,7 @@
         },
         {
             "repository-name": "linuxserver/baseimage-fedora",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "984aa505-8772-42bb-8b36-547469492cd6",
             "type": "docker-v1"
@@ -2529,7 +2529,7 @@
         },
         {
             "repository-name": "linuxserver/xbackbone",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "bd8786dd-3b36-4d8a-bdc7-df9b00f725d0",
             "type": "docker-v1"
@@ -2690,7 +2690,7 @@
         },
         {
             "repository-name": "linuxserver/emulatorjs",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "4f36204d-212c-426e-9288-5649c8d438a3",
             "type": "docker-v1"
@@ -2759,7 +2759,7 @@
             "type": "docker-v1"
         },
         {
-            "repository-name": "linkerd/proxy",
+            "repository-name": "test/proxy",
             "domain": "alex-test3.docker.scarf.sh",
             "registry": "ghcr.io",
             "package-id": "8aa503f9-4dc2-49a3-a2a9-99e30392d71d",
@@ -2886,7 +2886,7 @@
         },
         {
             "repository-name": "linuxserver/openvscode-server",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "ec2b1a97-c52c-4daa-a9b4-59e12e4bb8db",
             "type": "docker-v1"
@@ -3397,7 +3397,7 @@
         },
         {
             "repository-name": "linuxserver-labs/invoiceninja",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "b7ce1634-bbfb-42e0-8945-4a08c3874bde",
             "type": "docker-v1"
@@ -4279,7 +4279,7 @@
         },
         {
             "repository-name": "linuxserver-labs/omada-controller",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "829c1e56-7205-4d10-9ec1-c49b3cb34c9c",
             "type": "docker-v1"
@@ -5028,7 +5028,7 @@
         },
         {
             "repository-name": "linuxserver-labs/monit",
-            "domain": "lscr.io",
+            "domain": "testcr.io",
             "registry": "ghcr.io",
             "package-id": "99356de4-795c-452a-869c-9975535bceeb",
             "type": "docker-v1"
@@ -5562,7 +5562,7 @@
             "domain": "alex-test3.docker.scarf.sh",
             "registry": "ghcr.io",
             "rule-id": "6",
-            "pattern": "linkerd/*",
+            "pattern": "test/*",
             "type": "docker-v2"
         },
         {
@@ -5626,7 +5626,7 @@
             "domain": "alexbiehl.scarf.sh",
             "package-id": "42ccac55-9e60-4f08-9024-7eb89c049b9d",
             "type": "file-v1",
-            "outgoing-url": "https://github.com/linkerd/linkerd2/releases/download/edge-{version}/linkerd2-cli-edge-{version}-{platform}"
+            "outgoing-url": "https://github.com/test/test2/releases/download/edge-{version}/linkerd2-cli-edge-{version}-{platform}"
         },
         {
             "incoming-path": "/s3/ssh/{source}/{artifact}",
@@ -5689,7 +5689,7 @@
             "domain": "alexbiehl.gateway.scarf.sh",
             "package-id": "65c5beb9-056a-471a-8ebb-bb16f4fbda73",
             "type": "file-v1",
-            "outgoing-url": "https://github.com/linkerd/linkerd2/releases/download/edge-{version}/linkerd2-cli-edge-{version}-{platform}"
+            "outgoing-url": "https://github.com/test/test2/releases/download/edge-{version}/linkerd2-cli-edge-{version}-{platform}"
         },
         {
             "incoming-path": "/qBitTorrent/{version}",
@@ -5808,7 +5808,7 @@
             "domain": "alexbiehl.scarf.sh",
             "package-id": "b92f1b3a-d469-42f8-a147-86157391bbdb",
             "type": "file-v1",
-            "outgoing-url": "https://github.com/linkerd/linkerd2/releases/download/edge-{version}/linkerd2-cli-edge-{version}-{platform}"
+            "outgoing-url": "https://github.com/test/test2/releases/download/edge-{version}/linkerd2-cli-edge-{version}-{platform}"
         },
         {
             "incoming-path": "/ihp-new.tar.gz",
@@ -5864,7 +5864,7 @@
             "domain": "alexbiehl.scarf.sh",
             "package-id": "53d2763c-7735-4930-8320-70461a1713ba",
             "type": "file-v1",
-            "outgoing-url": "https://github.com/linkerd/linkerd2/releases/download/edge-{version}/linkerd2-cli-edge-{version}-{platform}"
+            "outgoing-url": "https://github.com/test/test2/releases/download/edge-{version}/linkerd2-cli-edge-{version}-{platform}"
         },
         {
             "incoming-path": "/abc/{version}",
@@ -5924,17 +5924,17 @@
         },
         {
             "incoming-path": "/install",
-            "domain": "ctl.flyte.org",
+            "domain": "ctl.test.org",
             "package-id": "aaf2ec15-5244-484b-845a-ffd559e5f802",
             "type": "file-v1",
-            "outgoing-url": "https://raw.githubusercontent.com/flyteorg/flytectl/master/install.sh"
+            "outgoing-url": "https://raw.githubusercontent.com/test/testctl/master/install.sh"
         },
         {
             "incoming-path": "/curl-runnings/curl-runnings-{version}-{platform}.tar.gz",
             "domain": "alexbiehl.gateway.scarf.sh",
             "package-id": "d8ca2379-4d14-4b42-ace3-87a253e9bc77",
             "type": "file-v1",
-            "outgoing-url": "https://github.com/linkerd/linkerd2/releases/download/edge-{version}/linkerd2-cli-edge-{version}-{platform}"
+            "outgoing-url": "https://github.com/test/test2/releases/download/edge-{version}/test2-cli-edge-{version}-{platform}"
         },
         {
             "incoming-path": "/rufus-new/{version}/{ext}",
@@ -5945,10 +5945,10 @@
         },
         {
             "incoming-path": "/",
-            "domain": "newsletter.flyte.org",
+            "domain": "newsletter.test.org",
             "package-id": "27036609-ca59-445f-ae6d-18a04e857b14",
             "type": "file-v1",
-            "outgoing-url": "https://www.getrevue.co/profile/flyte"
+            "outgoing-url": "https://www.getrevue.co/profile/test"
         },
         {
             "incoming-path": "/{version}/{file}",
@@ -5976,7 +5976,7 @@
             "domain": "alexbiehl.gateway.scarf.sh",
             "package-id": "14867d65-35cb-46d9-8963-0e1ee9dc24e2",
             "type": "file-v1",
-            "outgoing-url": "https://raw.githubusercontent.com/flyteorg/flytectl/master/install.sh"
+            "outgoing-url": "https://raw.githubusercontent.com/testorg/testctl/master/install.sh"
         },
         {
             "incoming-path": "/snowman",
@@ -5987,20 +5987,20 @@
         },
         {
             "incoming-path": "/install",
-            "domain": "ctl.flyte.org",
+            "domain": "ctl.test.org",
             "package-id": "aaf2ec15-5244-484b-845a-ffd559e5f802",
             "type": "file-v1",
-            "outgoing-url": "https://raw.githubusercontent.com/flyteorg/flytectl/master/install.sh"
+            "outgoing-url": "https://raw.githubusercontent.com/testorg/testctl/master/install.sh"
         },
         {
           "domain": "alexbiehl2.docker.scarf53.sh",
           "registry": "docker.io",
           "rule-id": "4",
-          "pattern": "linkerd/*",
+          "pattern": "library/*",
           "type": "docker-v2"
         },
         {
-          "repository-name": "linkerd/controller",
+          "repository-name": "library/controller",
           "package-id": "aaf2ec15-5244-484b-845a-ffd559e5f802",
           "domain": "dysinger.docker.scarf53.sh",
           "registry": "ghcr.io",
