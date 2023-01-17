@@ -79,7 +79,6 @@ library
     , aeson
     , aeson-pretty
     , async
-    , atomic-primops
     , attoparsec
     , base
     , base64-bytestring
@@ -89,7 +88,6 @@ library
     , conduit
     , cryptohash-sha256
     , exceptions
-    , random
     , hashable
     , http-client
     , http-types
@@ -111,6 +109,7 @@ library
     , transformers
     , unliftio-core
     , unordered-containers
+    , uuid
     , wai
     , warp
 

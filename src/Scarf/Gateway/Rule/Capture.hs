@@ -1,11 +1,11 @@
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE DerivingStrategies #-}
 
 module Scarf.Gateway.Rule.Capture
   ( RequestId (..),
-    newRequestIdGen,
+    newRequestId,
     RuleCapture (..),
     CapturedRequest,
     captureRequest,
@@ -13,16 +13,15 @@ module Scarf.Gateway.Rule.Capture
 where
 
 import Data.Aeson (Value)
-import Data.Atomics.Counter (incrCounter, newCounter)
 import Data.ByteString (ByteString)
 import Data.HashMap.Strict (HashMap)
 import Data.Text (Text)
 import Data.Text qualified as Text
 import Data.Time (UTCTime)
-import Data.Word (Word64)
+import Data.UUID (UUID)
+import Data.UUID.V4 qualified as UUID
 import Network.HTTP.Types (Status)
 import Network.Wai qualified as Wai
-import System.Random (newStdGen, randoms)
 
 -- | Interesting information about a rule match.
 data RuleCapture
@@ -68,18 +67,10 @@ data RuleCapture
 -- | Uniquely identifies a Request. We are trying to be as unique as
 -- it can get without global counters. It doesn't matter too much in the
 -- scheme of things if there are ids twice occurring twice.
-data RequestId = RequestId !Word64 !Word64 !Word64
+newtype RequestId = RequestId UUID
 
-newRequestIdGen :: IO (IO RequestId)
-newRequestIdGen = do
-  rng <- newStdGen
-  let (a, b) = case randoms rng of
-        a : b : _ -> (a, b)
-        _ -> error "impossible"
-  counter <- newCounter 0
-  return $ do
-    x <- incrCounter 1 counter
-    pure $! RequestId a b (fromIntegral x)
+newRequestId :: IO RequestId
+newRequestId = RequestId <$> UUID.nextRandom
 
 -- | All the relevant information that we emit to our queues for
 -- further processing. Careful when introducing breaking changes,
@@ -90,8 +81,7 @@ newRequestIdGen = do
 --
 -- TODO Switch to e.g. thrift encoding using Schema
 newtype CapturedRequest = CapturedRequest Text
-  deriving newtype Show
-
+  deriving newtype (Show)
 
 -- | Captures all the relevant information for further processing.
 --

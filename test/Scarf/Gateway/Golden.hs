@@ -7,7 +7,6 @@ module Scarf.Gateway.Golden (test_gateway_golden) where
 
 import Control.Concurrent (newEmptyMVar, putMVar, takeMVar)
 import Control.Monad (when)
-import Data.ByteString.Builder (stringUtf8)
 import Data.Aeson
   ( FromJSON (..),
     ToJSON (..),
@@ -25,6 +24,7 @@ import Data.Aeson.Encode.Pretty (confCompare, defConfig, encodePretty')
 import Data.Aeson.Encoding (dict, int, pair, pairs, text, unsafeToEncoding)
 import Data.Bifunctor (Bifunctor (bimap), first)
 import Data.ByteString qualified as ByteString
+import Data.ByteString.Builder (stringUtf8)
 import Data.CaseInsensitive qualified as CaseInsensitive
 import Data.HashMap.Strict qualified as HashMap
 import Data.IORef (newIORef, readIORef, writeIORef)
@@ -70,8 +70,8 @@ import Scarf.Gateway.Rule
   )
 import Scarf.Gateway.Rule.Capture
   ( CapturedRequest,
-    RequestId (RequestId),
     captureRequest,
+    newRequestId,
   )
 import Scarf.Lib.Tracing (nullTracer)
 import System.FilePath (replaceExtension)
@@ -155,13 +155,14 @@ goldenTests testsDirectory = do
     testResult <- unsafeInterleaveIO $ do
       -- Run the input in a Wai session and produce a Response and a CaptureRequest
       chan <- newEmptyMVar
+      requestId <- newRequestId
       let config =
             (newGatewayConfig inputManifest)
               { gatewayReportRequest = \_span request responseStatus capture -> do
                   putMVar chan $
                     captureRequest
                       (read "2022-01-11 08:34:00.914835 UTC")
-                      (RequestId 0 0 0)
+                      requestId
                       request
                       responseStatus
                       capture

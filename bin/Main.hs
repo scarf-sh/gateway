@@ -6,7 +6,6 @@ import Control.Concurrent (MVar, newMVar, putMVar, takeMVar)
 import Control.Concurrent.Async (withAsync)
 import Control.Exception (bracket, mask)
 import Control.Monad.IO.Class (liftIO)
-import Data.ByteString.Builder (hPutBuilder)
 import Data.Foldable (for_)
 import Data.Text (Text)
 import Data.Text qualified as Text
@@ -32,8 +31,7 @@ import Scarf.Gateway
 import Scarf.Gateway.Rule.Capture
   ( RequestId,
     captureRequest,
-    encodeCapturedRequestToJSON,
-    newRequestIdGen,
+    newRequestId,
   )
 import Scarf.Lib.Tracing
   ( ActiveSpan,
@@ -50,6 +48,7 @@ import Scarf.Lib.Tracing
 import System.IO
   ( BufferMode (..),
     hFlush,
+    hPutStrLn,
     hSetBinaryMode,
     hSetBuffering,
     stdout,
@@ -103,7 +102,7 @@ logRequest ::
   Status ->
   Maybe RuleCapture ->
   IO ()
-logRequest tracer idGen origin lock span request responseStatus capture =
+logRequest tracer idGen _origin lock span request responseStatus capture =
   runTracer tracer $
     traced_ (spanOpts "emit-output" (childOf span)) $ \span -> liftIO $ do
       addTag span ("response-status", IntT (fromIntegral (fromEnum responseStatus)))
@@ -131,10 +130,10 @@ logRequest tracer idGen origin lock span request responseStatus capture =
       let capturedRequest =
             captureRequest now requestId request responseStatus capture
 
-      spanCtx <- getSpanContext span
+      _spanCtx <- getSpanContext span
 
       withLock lock $ do
-        hPutBuilder stdout (encodeCapturedRequestToJSON (Just spanCtx) origin capturedRequest <> "\n")
+        hPutStrLn stdout (show capturedRequest)
         -- Flush to avoid "stuck" outputs
         hFlush stdout
 
@@ -159,7 +158,6 @@ main = withOpenSSL $ do
 
   withRootTracer manager Nothing $ \tracer -> do
     lock <- newLock
-    idGen <- newRequestIdGen
 
     runTracer tracer $ do
       -- A dummy trace to ensure we are outputting something
@@ -181,7 +179,7 @@ main = withOpenSSL $ do
                   -- Reporting is happening the same way the old Gateway reported things
                   -- is thus a drop-in replacement.
                   gatewayReportRequest =
-                    logRequest tracer idGen "my-gateway-application" lock,
+                    logRequest tracer newRequestId "my-gateway-application" lock,
                   gatewayProxyTo =
                     proxyTo tracer manager
                 }
