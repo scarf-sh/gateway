@@ -28,6 +28,7 @@ import Scarf.Gateway
     gateway,
     proxyTo,
   )
+import Scarf.Gateway.Rule (newDockerRuleV1)
 import Scarf.Gateway.Rule.Capture
   ( RequestId,
     captureRequest,
@@ -175,7 +176,11 @@ main = withOpenSSL $ do
                   -- Currently this is really just for testing purposes. We don't hit
                   -- Redis or anything but instead always returning a fixed set of rules.
                   gatewayDomainRules = \_span _domain -> do
-                    pure [],
+                    pure
+                      [ newDockerRuleV1 "package-1" ["library", "hello-world"] "registry-1.docker.io",
+                        newDockerRuleV1 "package-2" ["library", "nginx"] "registry-1.docker.io",
+                        newDockerRuleV1 "package-3" ["library", "alpine"] "registry-1.docker.io"
+                      ],
                   -- Reporting is happening the same way the old Gateway reported things
                   -- is thus a drop-in replacement.
                   gatewayReportRequest =
