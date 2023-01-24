@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+GITROOT=$(git rev-parse --show-toplevel)
+
+docker run -it --rm -v "$(pwd)":$GITROOT \
+	-e CHANGELOG_GITHUB_TOKEN=$CHANGELOG_GITHUB_TOKEN \
+	githubchangeloggenerator/github-changelog-generator -u scarf-sh -p gateway -o $GITROOT/CHANGELOG.md

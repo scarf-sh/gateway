@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+nix run .#generate-changelog -- -u scarf-sh -p gateway
