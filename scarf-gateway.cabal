@@ -52,7 +52,6 @@ extra-doc-files:    CHANGELOG.md
 extra-source-files: README.md
 data-files:
   a.png
-  default.dhall
 
 source-repository head
   type:     git
