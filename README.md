@@ -10,9 +10,18 @@ Make sure you have configured:
   - Haskell GHC 9.4.4
   - Cabal 3.8.1.0
 
-Run: `cabal build all`
+Run:
 
-Alternatively, you can build with nix:
+```
+cabal install
+```
+
+Alternatively, this project uses [Nix Flakes](https://nixos.wiki/wiki/Flakes). The Gateway is set as the default package. So to build:
+
+```
+nix build
+```
+
 
 ## Getting Started
 
@@ -26,6 +35,8 @@ This project is for everyone. We ask that our users and contributors take a few 
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use these files except in compliance with the License. You may obtain a copy of the License at
 
-   http://www.apache.org/licenses/LICENSE-2.0
+```
+http://www.apache.org/licenses/LICENSE-2.0
+```
 
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
