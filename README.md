@@ -22,10 +22,32 @@ Alternatively, this project uses [Nix Flakes](https://nixos.wiki/wiki/Flakes). T
 nix build
 ```
 
-
 ## Getting Started
 
-CONFIGURE manifest here!
+To use Scarf Gateway, you should first create a manifest with a set of redirection rules. For example:
+
+my-manifest.json
+```
+{
+    "rules": [
+        {
+          "repository-name": "library/hello-world",
+          "package-id": "aaf2ec15-5244-484b-845a-ffd559e5f802",
+          "domain": "testorg.docker.scarf.sh",
+          "registry": "registry-1.docker.io",
+          "type": "docker-v1"
+        }
+    ]
+}
+```
+
+Then, just run the gateway using the manifest above:
+
+```
+scarf-gateway --manifest ./my-manifest.json
+```
+
+Now gateway is running at port 8081. You can pull docker images with `docker pull localhost:8081/hello-world`
 
 ## Code of conduct
 
