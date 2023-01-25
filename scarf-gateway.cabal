@@ -153,6 +153,7 @@ executable scarf-gateway
     , http-client-openssl
     , http-types
     , internal
+    , optparse-applicative
     , scarf-gateway
     , text
     , time

@@ -1,0 +1,11 @@
+{
+  "rules": [
+      {
+        "repository-name": "library/hello-world",
+        "package-id": "aaf2ec15-5244-484b-845a-ffd559e5f802",
+        "domain": "testorg.docker.scarf.sh",
+        "registry": "registry-1.docker.io",
+        "type": "docker-v1"
+      }
+  ]
+}
