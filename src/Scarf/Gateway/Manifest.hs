@@ -20,6 +20,7 @@ import Data.Aeson
     decode',
     object,
     withObject,
+    (.!=),
     (.:),
     (.:?),
     (.=),
@@ -58,27 +59,37 @@ newtype Manifest = Manifest
 -- don't use HashMap's or similar data structures.
 data ManifestRule
   = ManifestDockerRuleV1
-      { -- | Package id for this Docker container
+      { -- | Package name
+        manifestRulePackageName :: !Text,
+        -- | Owner of the package
+        manifestRuleOwner :: !Text,
+        -- | Package id for this Docker container
         manifestRulePackageId :: !Text,
         -- | e.g. test.docker.scarf.sh
         manifestRuleDomain :: !Domain,
         -- | e.g. "library/hello-world"
         manifestRuleRepositoryName :: !Text,
-        -- | e.g. registry-1.docker.io
+        -- | e.g. docker.io
         manifestRuleBackendRegistry :: !Text
       }
   | ManifestDockerRuleV2
-      { -- | e.g. test.docker.scarf.sh
+      { -- | Owner of the package
+        manifestRuleOwner :: !Text,
+        -- | e.g. test.docker.scarf.sh
         manifestRuleDomain :: !Domain,
         -- | e.g. library/*
         manifestRulePattern :: !ImagePattern.Pattern,
         -- | Id of the corresponding rule in the scarf-server database
         manifestRuleId :: !Text,
-        -- | e.g. registry-1.docker.io
+        -- | e.g. docker.io
         manifestRuleBackendRegistry :: !Text
       }
   | ManifestFileRuleV1
-      { -- | e.g. test.gateway.scarf.sh
+      { -- | Package name
+        manifestRulePackageName :: !Text,
+        -- | Owner of the package
+        manifestRuleOwner :: !Text,
+        -- | e.g. test.docker.scarf.sh
         manifestRuleDomain :: !Domain,
         -- | e.g. /minikube-{platform}-{version}.tar.gz
         manifestRuleIncomingPath :: !URLTemplate,
@@ -89,7 +100,9 @@ data ManifestRule
         manifestRulePackageId :: !Text
       }
   | ManifestPythonRuleV1
-      { -- | e.g. test.gateway.scarf.sh
+      { -- | Owner of the package
+        manifestRuleOwner :: !Text,
+        -- | e.g. cr.l5d.io
         manifestRuleDomain :: !Domain,
         -- | e.g. aca
         manifestRulePackageName :: !Text,
@@ -152,25 +165,31 @@ instance FromJSON ManifestRule where
     case _type :: Text of
       "docker-v1" ->
         ManifestDockerRuleV1
-          <$> o .: "package-id"
+          <$> o .:? "package-name" .!= ""
+          <*> o .:? "owner" .!= ""
+          <*> o .: "package-id"
           <*> o .: "domain"
           <*> o .: "repository-name"
           <*> o .: "registry"
       "docker-v2" ->
         ManifestDockerRuleV2
-          <$> o .: "domain"
+          <$> o .:? "owner" .!= ""
+          <*> o .: "domain"
           <*> o .: "pattern"
           <*> o .: "rule-id"
           <*> o .: "registry"
       "file-v1" ->
         ManifestFileRuleV1
-          <$> o .: "domain"
+          <$> o .:? "package-name" .!= ""
+          <*> o .:? "owner" .!= ""
+          <*> o .: "domain"
           <*> o .: "incoming-path"
           <*> o .: "outgoing-url"
           <*> o .: "package-id"
       "python-v1" ->
         ManifestPythonRuleV1
-          <$> o .: "domain"
+          <$> o .:? "owner" .!= ""
+          <*> o .: "domain"
           <*> o .: "package-name"
           <*> o .: "file-name"
           <*> o .: "version"
@@ -188,6 +207,8 @@ instance ToJSON ManifestRule where
     object $
       dropNull
         [ "type" .= ("docker-v1" :: Text),
+          "package-name" .= manifestRulePackageName,
+          "owner" .= manifestRuleOwner,
           "package-id" .= manifestRulePackageId,
           "domain" .= manifestRuleDomain,
           "repository-name" .= manifestRuleRepositoryName,
@@ -197,6 +218,7 @@ instance ToJSON ManifestRule where
     object $
       dropNull
         [ "type" .= ("docker-v2" :: Text),
+          "owner" .= manifestRuleOwner,
           "domain" .= manifestRuleDomain,
           "registry" .= manifestRuleBackendRegistry,
           "pattern" .= manifestRulePattern,
@@ -206,6 +228,8 @@ instance ToJSON ManifestRule where
     object $
       dropNull
         [ "type" .= ("file-v1" :: Text),
+          "package-name" .= manifestRulePackageName,
+          "owner" .= manifestRuleOwner,
           "domain" .= manifestRuleDomain,
           "incoming-path" .= manifestRuleIncomingPath,
           "outgoing-url" .= manifestRuleOutgoingURL,
@@ -215,6 +239,7 @@ instance ToJSON ManifestRule where
     object $
       dropNull
         [ "type" .= ("python-v1" :: Text),
+          "owner" .= manifestRuleOwner,
           "domain" .= manifestRuleDomain,
           "package-name" .= manifestRulePackageName,
           "file-name" .= manifestRuleFileName,

@@ -50,8 +50,7 @@ extra-doc-files:    CHANGELOG.md
 
 -- Extra source files to be distributed with the package, such as examples, or a tutorial module.
 extra-source-files: README.md
-data-files:
-  a.png
+data-files:         a.png
 
 source-repository head
   type:     git
@@ -59,6 +58,25 @@ source-repository head
 
 common common-stuff
   ghc-options: -Wall -Werror -Wno-name-shadowing
+
+library internal
+  import:           common-stuff
+  exposed-modules:  Scarf.Lib.Tracing
+  build-depends:
+    , base
+    , conduit
+    , exceptions
+    , http-client
+    , microlens-platform
+    , opentracing
+    , opentracing-jaeger
+    , opentracing-wai
+    , opentracing-zipkin-v2
+    , text
+    , wai
+
+  hs-source-dirs:   src
+  default-language: GHC2021
 
 library
   import:           common-stuff
@@ -70,7 +88,8 @@ library
     Scarf.Gateway.Rule.Capture
     Scarf.Gateway.Sync
     Scarf.Gateway.URLTemplate
-    Scarf.Lib.Tracing
+
+  other-modules:    Scarf.Lib.Tracing
 
   -- LANGUAGE extensions used by modules in this package.
   -- other-extensions:
@@ -90,6 +109,7 @@ library
     , hashable
     , http-client
     , http-types
+    , internal
     , iproute
     , megaparsec
     , microlens-platform
@@ -132,6 +152,7 @@ executable scarf-gateway
     , http-client
     , http-client-openssl
     , http-types
+    , internal
     , scarf-gateway
     , text
     , time
