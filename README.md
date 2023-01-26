@@ -51,7 +51,7 @@ Now gateway is running at port 8081. You can pull docker images with `docker pul
 
 ## Code of conduct
 
-This project is for everyone. We ask that our users and contributors take a few minutes to review our Code of Conduct.
+This project is for everyone. We ask that our users and contributors take a few minutes to review our [Code of Conduct](https://github.com/scarf-sh/code-of-conduct).
 
 ## License
 
