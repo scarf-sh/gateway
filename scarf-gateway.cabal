@@ -30,7 +30,7 @@ version:            0.1.0.0
 -- description:
 
 -- The license under which the package is released.
-license:            BSD-2-Clause
+license:            Apache-2.0
 
 -- The file containing the license text.
 license-file:       LICENSE
