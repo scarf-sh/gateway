@@ -178,6 +178,7 @@ test-suite scarf-gateway-test
 
   build-depends:
     , aeson
+    , scarf-gateway:internal
     , aeson-pretty
     , base
     , bytestring
