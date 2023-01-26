@@ -6,7 +6,9 @@ import Control.Concurrent (MVar, newMVar, putMVar, takeMVar)
 import Control.Concurrent.Async (withAsync)
 import Control.Exception (bracket, mask)
 import Control.Monad.IO.Class (liftIO)
+import Data.ByteString.Lazy (readFile)
 import Data.Foldable (for_)
+import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import Data.Text qualified as Text
 import Data.Text.Encoding qualified as Text
@@ -22,13 +24,15 @@ import Network.HTTP.Types (Status, notFound404, ok200)
 import Network.Wai (Request (..), responseLBS)
 import Network.Wai.Handler.Warp (run)
 import OpenSSL.Session (contextSetDefaultVerifyPaths)
+import Options.Applicative qualified as Options
 import Scarf.Gateway
   ( GatewayConfig (..),
+    Rule,
     RuleCapture (..),
     gateway,
     proxyTo,
   )
-import Scarf.Gateway.Rule (newDockerRuleV1)
+import Scarf.Gateway.Manifest (decodeManifest, manifestToRules)
 import Scarf.Gateway.Rule.Capture
   ( RequestId,
     captureRequest,
@@ -147,8 +151,25 @@ healthcheck = run 8082 $ \request respond -> do
     _ ->
       respond $ responseLBS notFound404 [] mempty
 
+newtype Options = Options {manifestPath :: String}
+
+optionsParser :: Options.Parser Options
+optionsParser =
+  Options
+    <$> Options.strOption
+      ( Options.long "manifest"
+          <> Options.help "Manifest file path"
+      )
+
 main :: IO ()
 main = withOpenSSL $ do
+  Options {manifestPath} <-
+    liftIO $
+      Options.execParser $
+        Options.info (optionsParser Options.<**> Options.helper) mempty
+
+  rules <- readManifest manifestPath
+
   -- new OpenSSLManager with a fixed number of proxy connections
   manager <- newOpenSSLManager 5
 
@@ -176,11 +197,7 @@ main = withOpenSSL $ do
                   -- Currently this is really just for testing purposes. We don't hit
                   -- Redis or anything but instead always returning a fixed set of rules.
                   gatewayDomainRules = \_span _domain -> do
-                    pure
-                      [ newDockerRuleV1 "package-1" ["library", "hello-world"] "registry-1.docker.io",
-                        newDockerRuleV1 "package-2" ["library", "nginx"] "registry-1.docker.io",
-                        newDockerRuleV1 "package-3" ["library", "alpine"] "registry-1.docker.io"
-                      ],
+                    pure rules,
                   -- Reporting is happening the same way the old Gateway reported things
                   -- is thus a drop-in replacement.
                   gatewayReportRequest =
@@ -193,3 +210,9 @@ main = withOpenSSL $ do
         liftIO $
           withAsync healthcheck $ \_ ->
             run 8081 (gateway tracer gatewayConfig)
+
+readManifest :: FilePath -> IO [Rule]
+readManifest manifestFile = do
+  content <- Data.ByteString.Lazy.readFile manifestFile
+  let manifest = fromMaybe (error "manifest error") (decodeManifest content)
+  pure $ concatMap snd $ manifestToRules manifest
