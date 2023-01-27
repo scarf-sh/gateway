@@ -1,4 +1,7 @@
-# Scarf Gateway
+<h1 align="center">
+  <img src="/assets/gateway.svg" width="300" />
+  <img referrerpolicy="no-referrer-when-downgrade" src="https://static.scarf.sh/a.png?x-pxid=55057c42-7e5c-4f06-b3c5-8745e7e0a06f" />
+</h1>
 
 Scarf Gateway is a single access-point to any digital artifact, no matter where they are hosted. When an software is served through Scarf Gateway, the traffic is seamlessly redirected to the right place, and you get details about how your software is being adopted and used.
 
