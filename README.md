@@ -52,9 +52,17 @@ scarf-gateway --manifest ./my-manifest.json
 
 Now gateway is running at port 8081. You can pull docker images with `docker pull localhost:8081/hello-world`
 
-## Code of conduct
+## Community
+
+### Code of conduct
 
 This project is for everyone. We ask that our users and contributors take a few minutes to review our [Code of Conduct](https://github.com/scarf-sh/code-of-conduct).
+
+### Communication
+
+* [Issues](https://github.com/scarf-sh/gateway/issues) can be used for open discussions. If you know someone who should hear about the message, tag them explicitly using the @username Github syntax.
+
+* We also have a [slack server](https://join.slack.com/t/scarf-community/shared_invite/zt-1q9vpx13r-H9fy07psWSwM4SGF~vEsJA) that you all can join where we can discuss about the gateway or all matters open source!
 
 ## License
 
@@ -65,3 +73,4 @@ http://www.apache.org/licenses/LICENSE-2.0
 ```
 
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
+
