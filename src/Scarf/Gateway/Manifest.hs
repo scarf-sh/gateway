@@ -48,7 +48,7 @@ type Domain = Text
 
 -- | This is an interface type. Changes must be backward compatible.
 -- Note that strict determinism is a requirement for proper caching,
--- don't use HashMap's or similar data structures.
+-- don't use HashMaps or similar data structures.
 newtype Manifest = Manifest
   { manifestRules :: [ManifestRule]
   }
@@ -56,32 +56,33 @@ newtype Manifest = Manifest
 
 -- | This is an interface type. Changes must be backward compatible.
 -- Note that strict determinism is a requirement for proper caching,
--- don't use HashMap's or similar data structures.
+-- don't use HashMaps or similar data structures.
 data ManifestRule
   = ManifestDockerRuleV1
       { -- | Package name
         manifestRulePackageName :: !Text,
         -- | Owner of the package
         manifestRuleOwner :: !Text,
-        -- | Package id for this Docker container
+        -- | Package id for this Docker container.
+        -- This will be the unique identifier for this docker container.
         manifestRulePackageId :: !Text,
-        -- | e.g. test.docker.scarf.sh
+        -- | e.g. @test.docker.scarf.sh@
         manifestRuleDomain :: !Domain,
-        -- | e.g. "library/hello-world"
+        -- | e.g. @"library/hello-world"@
         manifestRuleRepositoryName :: !Text,
-        -- | e.g. docker.io
+        -- | e.g. @docker.io@, @ghcr.io@
         manifestRuleBackendRegistry :: !Text
       }
   | ManifestDockerRuleV2
       { -- | Owner of the package
         manifestRuleOwner :: !Text,
-        -- | e.g. test.docker.scarf.sh
+        -- | e.g. @test.docker.scarf.sh@
         manifestRuleDomain :: !Domain,
-        -- | e.g. library/*
+        -- | Path segment patterns. e.g. @library/*@.
         manifestRulePattern :: !ImagePattern.Pattern,
-        -- | Id of the corresponding rule in the scarf-server database
+        -- | Id of the corresponding rule in the database
         manifestRuleId :: !Text,
-        -- | e.g. docker.io
+        -- | e.g. @docker.io@
         manifestRuleBackendRegistry :: !Text
       }
   | ManifestFileRuleV1
@@ -89,28 +90,29 @@ data ManifestRule
         manifestRulePackageName :: !Text,
         -- | Owner of the package
         manifestRuleOwner :: !Text,
-        -- | e.g. test.docker.scarf.sh
+        -- | e.g. @test.docker.scarf.sh@
         manifestRuleDomain :: !Domain,
-        -- | e.g. /minikube-{platform}-{version}.tar.gz
+        -- | e.g. @/minikube-{platform}-{version}.tar.gz@
         manifestRuleIncomingPath :: !URLTemplate,
-        -- | e.g. https://github.com/kubernetes/minikube/releases/
-        -- downloads/minikube-{platform}-{version}.tar.gz
+        -- | e.g. @https://github.com/kubernetes/minikube/releases/@
+        -- @downloads/minikube-{platform}-{version}.tar.gz@
         manifestRuleOutgoingURL :: !URLTemplate,
         -- | Package id this file belongs to
+        -- This will be the unique identifier for this file package.
         manifestRulePackageId :: !Text
       }
   | ManifestPythonRuleV1
       { -- | Owner of the package
         manifestRuleOwner :: !Text,
-        -- | e.g. cr.l5d.io
+        -- | e.g. @cr.l5d.io@
         manifestRuleDomain :: !Domain,
-        -- | e.g. aca
+        -- | e.g. @aca@
         manifestRulePackageName :: !Text,
-        -- | e.g. aca-0.9.tar.gz
+        -- | e.g. @aca-0.9.tar.gz@
         manifestRuleFileName :: !Text,
-        -- | e.g. 1.0
+        -- | e.g. @1.0@
         manifestRuleVersion :: !Text,
-        -- | e.g. (md5, 123...)
+        -- | e.g. @(md5, 123...)@
         manifestRuleHashValue :: !(Maybe PythonFileHashV1),
         -- | A value of either true or false to indicate whether or not there is a GPG signature.
         manifestRuleGPGSig :: !(Maybe Bool),
@@ -119,7 +121,8 @@ data ManifestRule
         manifestRuleRequiresPython :: !(Maybe Text),
         -- | The backend URL to download the package.
         manifestRuleBackendURL :: !Text,
-        -- | Scarf Package Id.
+        -- | Package Id.
+        -- This will be the unique identifier for this python package.
         manifestRulePackageId :: !Text,
         -- | Manifest backend index. If not present, assume https://pypi.org/simple/
         manifestRuleBackendSimpleIndex :: !(Maybe Text)

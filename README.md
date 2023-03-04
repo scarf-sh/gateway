@@ -46,6 +46,8 @@ my-manifest.json
 
 Then, just run the gateway using the manifest above:
 
+There are different manifest rules for docker, file, and python packages. For details, please check [Scarf.Gateway.Manifest](/src/Scarf/Gateway/Manifest.hs)
+
 ```
 scarf-gateway --manifest ./my-manifest.json
 ```
