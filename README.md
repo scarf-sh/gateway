@@ -5,6 +5,8 @@
 
 Scarf Gateway is a single access-point to any digital artifact, no matter where they are hosted. When an software is served through Scarf Gateway, the traffic is seamlessly redirected to the right place, and you get details about how your software is being adopted and used.
 
+This is the core service that [Scarf](https://scarf.sh) runs internally, which is combined with other proprietiary functionalities that we'll migrate to the OSS version over time.
+
 Scarf Gateway supports Docker/OCI Containers, NPM packages, Python packages and any kind of executables.
 
 ## Building the project
