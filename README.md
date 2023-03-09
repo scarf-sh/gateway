@@ -48,7 +48,8 @@ my-manifest.json
 ```
 {
     "rules": [
-        {
+
+{
           "repository-name": "library/hello-world",
           "package-id": "aaf2ec15-5244-484b-845a-ffd559e5f802",
           "domain": "testorg.docker.scarf.sh",
@@ -152,6 +153,10 @@ For further details, please check [Scarf.Gateway.Manifest](/src/Scarf/Gateway/Ma
 ### Bandwidth usage: redirect vs proxy
 
 The gateway redirects whenever possible. Some versions of some container runtimes, however, do not properly authenticate with container registries when the client is redirected , and therefore the gateway is forced to proxy the requests to serve the download successfully. When Scarf Gateway must proxy, be prepared to pay for the bandwidth bill, as the container images themselves will pass through your infrastructure.
+
+## Logging
+
+Requests will be logged to stdout. Request details are in JSON format to be easily processed for any kind of analytics you might want to do. To learn more about getting advanced insights from Scarf Gateway traffic, check out the free and paid features of the entire [Scarf](https://scarf.sh) platform.
 
 ## Community
 
