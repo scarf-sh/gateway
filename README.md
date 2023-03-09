@@ -3,7 +3,7 @@
   <img referrerpolicy="no-referrer-when-downgrade" src="https://static.scarf.sh/a.png?x-pxid=55057c42-7e5c-4f06-b3c5-8745e7e0a06f" />
 </h1>
 
-Scarf Gateway is a universal redirect layer for any digital artifact or URL, anywhere online. Scarf acts much like a customizable link shortener that also lets you serve software like Docker containers, Python packages, or anything other kind of software you distribute. Host your Docker containers, NPM packages, PyPI packages, your binaries, and more, all from the same place. Scarf Gateway also makes it easy to switch between different registries without disrupting your public endpoints, allowing for a more flexible package distribution system that is decoupled from where your artifacts are hosted.
+Scarf Gateway is a universal redirect layer for any digital artifact or URL, anywhere online. Scarf Gateway acts much like a customizable link shortener that also lets you serve software like Docker containers, Python packages, or anything other kind of software you distribute. Host your Docker containers, NPM packages, PyPI packages, your binaries, and more, all from the same place. Scarf Gateway also makes it easy to switch between different registries without disrupting your public endpoints, allowing for a more flexible package distribution system that is decoupled from where your artifacts are hosted.
 
 When requests are made to Scarf Gateway, the traffic is automatically redirected to the configured location, while ensuring seamless compatibility with popular package managers, container runtimes, and HTTP clients.
 
