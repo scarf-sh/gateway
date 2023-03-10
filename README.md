@@ -3,11 +3,24 @@
   <img referrerpolicy="no-referrer-when-downgrade" src="https://static.scarf.sh/a.png?x-pxid=55057c42-7e5c-4f06-b3c5-8745e7e0a06f" />
 </h1>
 
-Scarf Gateway is a single access-point to any digital artifact, no matter where they are hosted. When an software is served through Scarf Gateway, the traffic is seamlessly redirected to the right place, and you get details about how your software is being adopted and used.
+Scarf Gateway is a universal redirect layer for any digital artifact or URL, anywhere online. Scarf Gateway acts much like a customizable link shortener that also lets you serve software like Docker containers, Python packages, or anything other kind of software you distribute. Host your Docker containers, NPM packages, PyPI packages, your binaries, and more, all from the same place. Scarf Gateway also makes it easy to switch between different registries without disrupting your public endpoints, allowing for a more flexible package distribution system that is decoupled from where your artifacts are hosted.
 
-This is the core service that [Scarf](https://scarf.sh) runs internally, which is combined with other proprietiary functionalities that we'll migrate to the OSS version over time.
+When requests are made to Scarf Gateway, the traffic is automatically redirected to the configured location, while ensuring seamless compatibility with popular package managers, container runtimes, and HTTP clients.
 
-Scarf Gateway supports Docker/OCI Containers, NPM packages, Python packages and any kind of executables.
+```bash
+# Serve container pulls from Docker Hub, GHCR, etc via your domain
+docker pull yourdomain.com/your-namespace/your-image
+# Redirect Python package downloads PyPI, etc via your domain
+pip install --extra-index-url yourdomain.com your-python-package
+# Redirect HTTP requests, file downloads, etc to anywhere through your domain
+wget yourdomain.com/linux/v1.2.0/your-tarball.tgz
+```
+
+Scarf Gateway is a core service that [Scarf](https://scarf.sh) runs internally. Scarf hosts a robust, globally distributed Gateway service, and augments it with extra functionality including:
+  - A web dashboard for managing your package configuration
+  - Robust analytics, data visualization, export, etc.
+
+Scarf Gateway natively supports Docker/OCI Containers, Python packages, NPM packages, and any other file, URL, or URL template.
 
 ## Building the project
 
@@ -35,7 +48,8 @@ my-manifest.json
 ```
 {
     "rules": [
-        {
+
+{
           "repository-name": "library/hello-world",
           "package-id": "aaf2ec15-5244-484b-845a-ffd559e5f802",
           "domain": "testorg.docker.scarf.sh",
@@ -56,7 +70,7 @@ Now gateway is running at port 8081. You can pull docker images with `docker pul
 
 ## Gateway Rules
 
-There are different manifest rules for docker, file, and python packages. The rule is composed by some basic properities:
+There are different manifest rules for docker, file, and python packages. The rule is composed by some basic properties:
 - `type` - It can be `docker-v1` for docker images, `python-v1` for python packages, and `file-v1` for any kind of files or executable.
 - `package-id` - A unique identifier for the package. It can be any string from your system.
 - `domain` - A custom domain through where the package is served. Domains can be different for each file. E.g. `my-domain.com`
@@ -66,7 +80,7 @@ There are different manifest rules for docker, file, and python packages. The ru
 For Docker Packages (`docker-v1`) some additional properties are required:
 
 - `repository-name` - The image name used by the docker pull command. E.g. `library/hello-world`, `library/nginx`
-- `backend-registry` - The backend registry domain. The most common are `registry-1.docker.io` for DockerHub, and `ghcr.io` for GitHub.
+- `backend-registry` - The backend registry domain. The most common are `registry-1.docker.io` for Docker Hub, and `ghcr.io` for GitHub.
 
 Example of Docker rule:
 
@@ -98,7 +112,7 @@ Example of File rule:
   "outgoing-url": "https://deno.land/x/{identifer}@{version}"
 }
 ```
-
+    
 ### Python Rules
 
 For Python Packages (`python-v1`) some additional properties are required::
@@ -133,6 +147,16 @@ Example of Python rule
 
 For further details, please check [Scarf.Gateway.Manifest](/src/Scarf/Gateway/Manifest.hs)
 
+## Caveats
+
+
+### Bandwidth usage: redirect vs proxy
+
+The gateway redirects whenever possible. Some versions of some container runtimes, however, do not properly authenticate with container registries when the client is redirected , and therefore the gateway is forced to proxy the requests to serve the download successfully. When Scarf Gateway must proxy, be prepared to pay for the bandwidth bill, as the container images themselves will pass through your infrastructure.
+
+## Logging
+
+Requests will be logged to stdout. Request details are in JSON format to be easily processed for any kind of analytics you might want to do. To learn more about getting advanced insights from Scarf Gateway traffic, check out the free and paid features of the entire [Scarf](https://scarf.sh) platform.
 
 ## Community
 
@@ -142,17 +166,6 @@ This project is for everyone. We ask that our users and contributors take a few 
 
 ### Communication
 
-* [Issues](https://github.com/scarf-sh/gateway/issues) can be used for open discussions. If you know someone who should hear about the message, tag them explicitly using the @username Github syntax.
+* [Issues](https://github.com/scarf-sh/gateway/issues) can be used for open discussions. If you know someone who should hear about the message, tag them explicitly using the @username GitHub syntax.
 
-* We also have a [slack server](https://join.slack.com/t/scarf-community/shared_invite/zt-1q9vpx13r-H9fy07psWSwM4SGF~vEsJA) that you all can join where we can discuss about the gateway or all matters open source!
-
-## License
-
-Licensed under the Apache License, Version 2.0 (the "License"); you may not use these files except in compliance with the License. You may obtain a copy of the License at
-
-```
-http://www.apache.org/licenses/LICENSE-2.0
-```
-
-Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
-
+* We also have a [slack server](https://join.slack.com/t/scarf-community/shared_invite/zt-1q9vpx13r-H9fy07psWSwM4SGF~vEsJA) that anyone can join where we can discuss about the gateway or all matters open source!
