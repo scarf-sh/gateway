@@ -47,16 +47,15 @@ To use Scarf Gateway, you should first create a manifest with a set of redirecti
 my-manifest.json
 ```
 {
-    "rules": [
-
-{
-          "repository-name": "library/hello-world",
-          "package-id": "aaf2ec15-5244-484b-845a-ffd559e5f802",
-          "domain": "testorg.docker.scarf.sh",
-          "registry": "registry-1.docker.io",
-          "type": "docker-v1"
-        }
-    ]
+  "rules": [
+    {
+      "repository-name": "library/hello-world",
+      "package-id": "aaf2ec15-5244-484b-845a-ffd559e5f802",
+      "domain": "testorg.docker.scarf.sh",
+      "registry": "registry-1.docker.io",
+      "type": "docker-v1"
+     }
+  ]
 }
 ```
 
@@ -96,7 +95,7 @@ Example of Docker rule:
 
 ### File Rules
 
-For File Packages (`file-v1`) some additional properties are required::
+For File Packages (`file-v1`) some additional properties are required:
 
 - `incoming-path` - The URL path to download the file. E.g. `/minikube-{platform}-{version}.tar.gz`
 - `outgoing-url` - The URL to redirect the file. E.g. `https://github.com/kubernetes/minikube/releases/downloads/minikube-{platform}-{version}.tar.gz`
@@ -115,7 +114,7 @@ Example of File rule:
     
 ### Python Rules
 
-For Python Packages (`python-v1`) some additional properties are required::
+For Python Packages (`python-v1`) some additional properties are required:
 
 - `file-name` - The full name of the file. See examples below.
 - `package-name` - The package name.
