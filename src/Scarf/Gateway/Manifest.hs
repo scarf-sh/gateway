@@ -32,10 +32,12 @@ import Data.HashMap.Strict qualified as HashMap
 import Data.Text (Text)
 import Data.Text qualified as Text
 import Scarf.Gateway.ImagePattern qualified as ImagePattern
+import Scarf.Gateway.Regex (Regex)
 import Scarf.Gateway.Rule
   ( Rule,
     newDockerRuleV1,
     newDockerRuleV2,
+    newFileRuleV2,
     newFlatfileRule,
     newPythonRule,
     optimizeRules,
@@ -99,6 +101,21 @@ data ManifestRule
         manifestRuleOutgoingURL :: !URLTemplate,
         -- | Package id this file belongs to
         -- This will be the unique identifier for this file package.
+        manifestRulePackageId :: !Text
+      }
+  | ManifestFileRuleV2
+      { -- | Package name
+        manifestRulePackageName :: !Text,
+        -- | Owner of the package
+        manifestRuleOwner :: !Text,
+        -- | e.g. cr.l5d.io
+        manifestRuleDomain :: !Domain,
+        -- | e.g. /minikube-{platform}-{version}.tar.gz
+        manifestRuleIncomingPathRegex :: !Regex,
+        -- | e.g. https://github.com/kubernetes/minikube/releases/
+        -- downloads/minikube-{platform}-{version}.tar.gz
+        manifestRuleOutgoingURL :: !URLTemplate,
+        -- | Package id this file belongs to
         manifestRulePackageId :: !Text
       }
   | ManifestPythonRuleV1
@@ -189,6 +206,14 @@ instance FromJSON ManifestRule where
           <*> o .: "incoming-path"
           <*> o .: "outgoing-url"
           <*> o .: "package-id"
+      "file-v2" ->
+        ManifestFileRuleV2
+          <$> o .:? "package-name" .!= ""
+          <*> o .:? "owner" .!= ""
+          <*> o .: "domain"
+          <*> o .: "incoming-path"
+          <*> o .: "outgoing-url"
+          <*> o .: "package-id"
       "python-v1" ->
         ManifestPythonRuleV1
           <$> o .:? "owner" .!= ""
@@ -235,6 +260,17 @@ instance ToJSON ManifestRule where
           "owner" .= manifestRuleOwner,
           "domain" .= manifestRuleDomain,
           "incoming-path" .= manifestRuleIncomingPath,
+          "outgoing-url" .= manifestRuleOutgoingURL,
+          "package-id" .= manifestRulePackageId
+        ]
+  toJSON ManifestFileRuleV2 {..} =
+    object $
+      dropNull
+        [ "type" .= ("file-v2" :: Text),
+          "package-name" .= manifestRulePackageName,
+          "owner" .= manifestRuleOwner,
+          "domain" .= manifestRuleDomain,
+          "incoming-path" .= manifestRuleIncomingPathRegex,
           "outgoing-url" .= manifestRuleOutgoingURL,
           "package-id" .= manifestRulePackageId
         ]
@@ -301,6 +337,11 @@ manifestRuleToRule manifestRule = case manifestRule of
       manifestRulePackageId
       (URLTemplate.toText manifestRuleIncomingPath)
       (URLTemplate.toText manifestRuleOutgoingURL)
+  ManifestFileRuleV2 {..} ->
+    newFileRuleV2
+      manifestRulePackageId
+      manifestRuleIncomingPathRegex
+      manifestRuleOutgoingURL
   ManifestPythonRuleV1 {..} ->
     newPythonRule
       manifestRulePackageName

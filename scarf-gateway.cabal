@@ -84,6 +84,7 @@ library
     Scarf.Gateway
     Scarf.Gateway.ImagePattern
     Scarf.Gateway.Manifest
+    Scarf.Gateway.Regex
     Scarf.Gateway.Rule
     Scarf.Gateway.Rule.Capture
     Scarf.Gateway.Sync
@@ -120,6 +121,7 @@ library
     , opentracing-jaeger
     , opentracing-wai
     , opentracing-zipkin-v2
+    , pcre-light
     , resourcet
     , retry
     , stm
@@ -178,7 +180,6 @@ test-suite scarf-gateway-test
 
   build-depends:
     , aeson
-    , scarf-gateway:internal
     , aeson-pretty
     , base
     , bytestring
@@ -186,7 +187,7 @@ test-suite scarf-gateway-test
     , containers
     , filepath
     , network-uri
-    , scarf-gateway
+    , scarf-gateway:{scarf-gateway, internal}
     , tasty
     , tasty-golden
     , tasty-hunit

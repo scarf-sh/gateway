@@ -13,6 +13,7 @@ module Scarf.Gateway.Rule
     newDockerRuleV1,
     newDockerRuleV2,
     newFlatfileRule,
+    newFileRuleV2,
     newPixelRule,
     newScarfJsRule,
     newPythonRule,
@@ -60,6 +61,7 @@ import Network.Wai
 import Network.Wai qualified as Wai
 import Network.Wai.Internal (Response (..))
 import Scarf.Gateway.ImagePattern qualified as ImagePattern
+import Scarf.Gateway.Regex qualified as Regex
 import Scarf.Gateway.Rule.Capture (RuleCapture (..))
 import Scarf.Gateway.URLTemplate (URLTemplate)
 import Scarf.Gateway.URLTemplate qualified as URLTemplate
@@ -114,6 +116,26 @@ data FlatfileRule = FlatfileRule
 
 instance Ord FlatfileRule where
   a `compare` b = rulePublicTemplate a `compare` rulePublicTemplate b
+
+data FileRuleV2 = FileRuleV2
+  { -- | Package this rule belongs to.
+    rulePackage :: Text,
+    -- | The set of variables that need to be present to accept a match.
+    ruleExpectedVariables :: !(HashSet Text),
+    -- | Regular expression matching the incoming request path.
+    -- Beware: the public template is only applicable
+    -- to the path part of the request, including leading "/"
+    -- e.g. /minikube-{platform}-{version}.tar.gz
+    ruleIncomingPathRegex :: !Regex.Regex,
+    -- | URL template for the url we redirect to from the public url.
+    -- notice the use of the template variables {platform} + {version}
+    -- e.g. https://github.com/kubernetes/minikube/releases/downloads/minikube-{platform}-{version}.tar.gzf
+    ruleBackendTemplate :: !URLTemplate
+  }
+  deriving (Eq, Show)
+
+instance Ord FileRuleV2 where
+  a `compare` b = ruleIncomingPathRegex a `compare` ruleIncomingPathRegex b
 
 -- | Matching Scarf's documentation pixels. We don't validate the pixel-id
 -- at request time. Just log the access and carry on.
@@ -201,6 +223,7 @@ data Rule
   = RuleDockerV1 DockerRuleV1
   | RuleDockerV2 DockerRuleV2
   | RuleFlatfile FlatfileRule
+  | RuleFileV2 FileRuleV2
   | RulePixel PixelRule
   | RulePythonV1 PythonRuleV1
   | RuleScarfJs
@@ -220,11 +243,19 @@ instance Ord Rule where
     (RuleFlatfile _, RuleDockerV2 _) -> GT
     (RuleFlatfile _, RulePixel _) -> GT
     (RuleFlatfile f1, RuleFlatfile f2) -> f1 `compare` f2
+    (RuleFlatfile _, RuleFileV2 _) -> LT
     (RuleFlatfile _, RulePythonV1 _) -> LT
+    (RuleFileV2 _, RuleDockerV1 _) -> GT
+    (RuleFileV2 _, RuleDockerV2 _) -> GT
+    (RuleFileV2 _, RulePixel _) -> GT
+    (RuleFileV2 _, RuleFlatfile _) -> GT
+    (RuleFileV2 f1, RuleFileV2 f2) -> f1 `compare` f2
+    (RuleFileV2 _, RulePythonV1 _) -> LT
     (RulePythonV1 _, RuleDockerV1 _) -> GT
     (RulePythonV1 _, RuleDockerV2 _) -> GT
     (RulePythonV1 _, RulePixel _) -> GT
     (RulePythonV1 _, RuleFlatfile _) -> GT
+    (RulePythonV1 _, RuleFileV2 _) -> GT
     (RulePythonV1 p1, RulePythonV1 p2) -> p1 `compare` p2
     (RuleScarfJs, RuleScarfJs) -> EQ
     (RuleScarfJs, _) -> LT
@@ -316,6 +347,23 @@ newFlatfileRule package public backend =
             rulePublicTemplate = unsafeParseTemplate public,
             ruleBackendTemplate = backendTemplate
           }
+
+newFileRuleV2 ::
+  -- | Package identifier
+  Text ->
+  -- | Incoming path regex
+  Regex.Regex ->
+  -- | Backend URL template
+  URLTemplate ->
+  Rule
+newFileRuleV2 package incoming backend =
+  RuleFileV2
+    FileRuleV2
+      { rulePackage = package,
+        ruleExpectedVariables = HashSet.fromList (URLTemplate.variables backend),
+        ruleIncomingPathRegex = incoming,
+        ruleBackendTemplate = backend
+      }
 
 newPixelRule ::
   -- | Content-type of pixel
@@ -523,6 +571,8 @@ matchRule rule request = case rule of
     matchDocker (dockerImageMatcherV2 dockerRule) ruleBackendRegistry request
   RuleFlatfile flatfileRule ->
     matchFlatfile flatfileRule request
+  RuleFileV2 fileRuleV2 ->
+    matchFileRuleV2 fileRuleV2 request
   RulePixel pixelRule ->
     matchPixel pixelRule request
   RulePythonV1 pythonRule ->
@@ -676,6 +726,50 @@ matchFlatfile FlatfileRule {..} request@Request {requestPath, requestQueryString
                 )
             )
     _ ->
+      pure Nothing
+
+matchFileRuleV2 :: MonadMatch m => FileRuleV2 -> Request -> m (Maybe RedirectOrProxy)
+matchFileRuleV2 FileRuleV2 {..} Request {requestPath} =
+  case Regex.match ruleIncomingPathRegex requestPath of
+    Just xs
+      | let extracted = HashMap.fromList xs,
+        HashSet.isSubsetOf ruleExpectedVariables (HashMap.keysSet extracted),
+        Just !expanded <- URLTemplate.expand (`HashMap.lookup` extracted) ruleBackendTemplate -> do
+          let !absoluteUrl = Text.encodeUtf8 expanded
+          pure
+            ( Just
+                ( RedirectTo
+                    ( FlatfileCapture
+                        { filePackage = rulePackage,
+                          fileAbsoluteUrl = absoluteUrl,
+                          fileVariables = extracted
+                        }
+                    )
+                    (Text.encodeUtf8 expanded)
+                )
+            )
+
+      -- This is the case where the backend doesn't have any variables, it's
+      -- it's basically a plain old boring redirect and resolves around a
+      -- string comparison of the url path.
+      | HashSet.null ruleExpectedVariables,
+        Just !ruleBackendExpanded <- URLTemplate.expand (\_ -> Nothing) ruleBackendTemplate -> do
+          let !absoluteUrl = Text.encodeUtf8 ruleBackendExpanded
+          pure
+            ( Just
+                ( RedirectTo
+                    ( FlatfileCapture
+                        { filePackage = rulePackage,
+                          fileAbsoluteUrl = absoluteUrl,
+                          fileVariables = HashMap.empty
+                        }
+                    )
+                    absoluteUrl
+                )
+            )
+      | otherwise ->
+          pure Nothing
+    Nothing ->
       pure Nothing
 
 pathAndQueryValidation :: Text -> Request -> Bool
