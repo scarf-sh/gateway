@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 
-module Scarf.Gateway.Manifest
+module Scarf.Manifest
   ( Domain,
     Manifest (..),
     ManifestRule (..),

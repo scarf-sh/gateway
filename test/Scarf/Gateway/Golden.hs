@@ -62,7 +62,6 @@ import Scarf.Gateway
   ( GatewayConfig (..),
     gateway,
   )
-import Scarf.Gateway.Manifest (Manifest, manifestToRules)
 import Scarf.Gateway.Rule
   ( newPixelRule,
     newScarfJsRule,
@@ -74,6 +73,7 @@ import Scarf.Gateway.Rule.Capture
     newRequestId,
   )
 import Scarf.Lib.Tracing (nullTracer)
+import Scarf.Manifest (Manifest, manifestToRules)
 import System.FilePath (replaceExtension)
 import System.IO.Unsafe (unsafeInterleaveIO)
 import Test.Tasty (TestTree)
