@@ -45,8 +45,8 @@ import Scarf.Gateway
     newFlatfileRule,
     newPixelRule,
   )
-import Scarf.Gateway.Manifest (decodeManifest, encodeManifest, manifestToRules)
 import Scarf.Lib.Tracing (nullTracer)
+import Scarf.Manifest (decodeManifest, encodeManifest, manifestToRules)
 import Test.Tasty (TestName, TestTree)
 import Test.Tasty.HUnit (testCase, (@?=))
 

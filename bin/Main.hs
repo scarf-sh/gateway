@@ -32,7 +32,6 @@ import Scarf.Gateway
     gateway,
     proxyTo,
   )
-import Scarf.Gateway.Manifest (decodeManifest, manifestToRules)
 import Scarf.Gateway.Rule.Capture
   ( RequestId,
     captureRequest,
@@ -50,6 +49,7 @@ import Scarf.Lib.Tracing
     traced_,
     withRootTracer,
   )
+import Scarf.Manifest (decodeManifest, manifestToRules)
 import System.IO
   ( BufferMode (..),
     hFlush,

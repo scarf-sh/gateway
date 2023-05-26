@@ -83,7 +83,6 @@ library
   exposed-modules:
     Scarf.Gateway
     Scarf.Gateway.ImagePattern
-    Scarf.Gateway.Manifest
     Scarf.Gateway.Regex
     Scarf.Gateway.Rule
     Scarf.Gateway.Rule.Capture
@@ -137,8 +136,24 @@ library
   hs-source-dirs:   src
   default-language: GHC2021
 
+library manifest
+  import:           common-stuff
+  exposed-modules:  Scarf.Manifest
+  build-depends:
+    , aeson
+    , aeson-pretty
+    , base
+    , bytestring
+    , scarf-gateway
+    , text
+    , unordered-containers
+
+  hs-source-dirs:   manifest
+  default-language: GHC2021
+
 executable scarf-gateway
   import:           common-stuff
+  exposed-modules:  Scarf.Gateway.Manifest
   main-is:          Main.hs
 
   -- Modules included in this executable, other than Main.
@@ -155,6 +170,7 @@ executable scarf-gateway
     , http-client-openssl
     , http-types
     , internal
+    , manifest
     , optparse-applicative
     , scarf-gateway
     , text
@@ -187,7 +203,7 @@ test-suite scarf-gateway-test
     , containers
     , filepath
     , network-uri
-    , scarf-gateway:{scarf-gateway, internal}
+    , scarf-gateway:{scarf-gateway, internal, manifest}
     , tasty
     , tasty-golden
     , tasty-hunit
