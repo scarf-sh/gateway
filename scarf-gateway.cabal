@@ -153,7 +153,6 @@ library manifest
 
 executable scarf-gateway
   import:           common-stuff
-  exposed-modules:  Scarf.Gateway.Manifest
   main-is:          Main.hs
 
   -- Modules included in this executable, other than Main.
