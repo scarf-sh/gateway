@@ -151,7 +151,7 @@ instance IsGatewayConfig (IO GatewayConfig) where
   getConfig = id
 
 gatewayTestCase ::
-  IsGatewayConfig config =>
+  (IsGatewayConfig config) =>
   TestName ->
   config ->
   (RunRequest -> Session a) ->
@@ -179,7 +179,7 @@ gatewayTestCase name toConfig session = do
     pure ()
 
 gatewayProxyTestCase ::
-  IsGatewayConfig config =>
+  (IsGatewayConfig config) =>
   TestName ->
   config ->
   (RunRequest -> Session a) ->
@@ -206,13 +206,13 @@ gatewayProxyTestCase name toConfig session = do
     _ <- runSession (session runRequest) (gateway nullTracer config')
     pure ()
 
-assertRedirect :: HasCallStack => ByteString -> SResponse -> Session ()
+assertRedirect :: (HasCallStack) => ByteString -> SResponse -> Session ()
 assertRedirect location response = do
   assertStatus 302 response
   assertHeader "Location" location response
 
 -- | We add a X-Scarf-Proxy-To header to witness that a request got proxied.
-_assertProxiedRedirect :: HasCallStack => ByteString -> SResponse -> Session ()
+_assertProxiedRedirect :: (HasCallStack) => ByteString -> SResponse -> Session ()
 _assertProxiedRedirect location response = do
   assertStatus 307 response
   assertHeader "X-Scarf-Proxy-To" "" response

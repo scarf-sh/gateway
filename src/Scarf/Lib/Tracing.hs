@@ -248,7 +248,7 @@ withRootTracer manager msamplingRate action = do
                 }
         action tracer
 
-getSpanContext :: MonadIO m => ActiveSpan -> m SpanContext
+getSpanContext :: (MonadIO m) => ActiveSpan -> m SpanContext
 getSpanContext span =
   view spanContext <$> readActiveSpan span
 
