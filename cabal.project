@@ -1,6 +1,6 @@
 packages: ./*.cabal
 
-index-state: 2022-11-04T00:00:00Z
+index-state: 2023-06-01T00:00:00Z
 
 with-compiler: ghc-9.4.4
 

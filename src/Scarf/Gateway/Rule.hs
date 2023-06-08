@@ -32,11 +32,7 @@ where
 import Crypto.Hash.SHA256 (hashlazy)
 import Data.Aeson.Parser qualified as Aeson
 import Data.Attoparsec.ByteString qualified as Attoparsec
-import Data.ByteString
-  ( ByteString,
-    isInfixOf,
-    isPrefixOf,
-  )
+import Data.ByteString (ByteString)
 import Data.ByteString.Base64.URL (encode)
 import Data.ByteString.Builder (Builder, char7, string7, toLazyByteString)
 import Data.ByteString.Char8 qualified as BS
@@ -53,9 +49,7 @@ import Network.URI (URI (..), parseRelativeReference)
 import Network.Wai
   ( getRequestBodyChunk,
     pathInfo,
-    rawPathInfo,
     rawQueryString,
-    requestHeaderUserAgent,
     requestMethod,
   )
 import Network.Wai qualified as Wai
@@ -63,6 +57,14 @@ import Network.Wai.Internal (Response (..))
 import Scarf.Gateway.ImagePattern qualified as ImagePattern
 import Scarf.Gateway.Regex qualified as Regex
 import Scarf.Gateway.Rule.Capture (RuleCapture (..))
+import Scarf.Gateway.Rule.Docker
+  ( DockerRuleV1 (..),
+    DockerRuleV2 (..),
+    matchDockerRuleV1,
+    matchDockerRuleV2,
+  )
+import Scarf.Gateway.Rule.Request (Request (..), newRequest)
+import Scarf.Gateway.Rule.Response (ResponseBuilder (..))
 import Scarf.Gateway.URLTemplate (URLTemplate)
 import Scarf.Gateway.URLTemplate qualified as URLTemplate
 
@@ -72,30 +74,8 @@ import Scarf.Gateway.URLTemplate qualified as URLTemplate
 type MonadMatch m = (m ~ IO)
 
 -- | Run a MonadMatch into IO.
-runMatch :: MonadMatch m => m a -> IO a
+runMatch :: (MonadMatch m) => m a -> IO a
 runMatch = id
-
--- | Rule that matches a particular image and redirects (or proxies)
--- to a backend registry.
-data DockerRuleV1 = DockerRuleV1
-  { -- | Images matching this rule. e.g. ["library", "hello-world"] and their
-    -- respective package ids.
-    ruleImages :: !(HashMap [Text] Text),
-    -- | Domain of the registry to redirect (or proxy) to.
-    ruleBackendRegistry :: !ByteString
-  }
-  deriving (Eq, Show)
-
-data DockerRuleV2 = DockerRuleV2
-  { -- | Images matching this pattern will be considered a rule
-    -- match. Images matching a rule will be flagged for auto-creation.
-    ruleImagePattern :: !ImagePattern.Pattern,
-    -- | Id of the rule in the backend.
-    ruleRuleId :: !Text,
-    -- | Domain of the registry to redirect (or proxy) to.
-    ruleBackendRegistry :: !ByteString
-  }
-  deriving (Eq, Show)
 
 data FlatfileRule = FlatfileRule
   { -- | Package this rule belongs to.
@@ -194,30 +174,6 @@ data PythonRuleV1 = PythonRuleV1
     ruleEtag :: ByteString
   }
   deriving stock (Show, Eq, Ord)
-
--- | Wraps around a 'Wai.Request' to provide and cache additional info
--- potentially used by by many rules.
-data Request = Request
-  { -- | The underlying Wai.Request.
-    requestWai :: Wai.Request,
-    -- | It's annoying to recalculate this between flat file rules. Instead
-    -- we cache it here when creating a Request.
-    requestPath :: String,
-    -- | This is to handle the case where query string are use in the request
-    requestQueryString :: String
-  }
-
-newRequest :: Wai.Request -> Request
-newRequest request =
-  Request
-    { requestWai = request,
-      requestPath =
-        -- Safe way to go from ByteString to String for UTF-8
-        -- but stupidly indirect.
-        Text.unpack $ Text.decodeUtf8 (rawPathInfo request),
-      requestQueryString =
-        Text.unpack $ Text.decodeUtf8 (rawQueryString request)
-    }
 
 data Rule
   = RuleDockerV1 DockerRuleV1
@@ -544,7 +500,7 @@ optimizeRules (rule : rules) =
 -- TODO We should probably return all the rules that matched to
 -- report ambigouites.
 match ::
-  MonadMatch m =>
+  (MonadMatch m) =>
   [Rule] ->
   Wai.Request ->
   m (Maybe (Rule, RedirectOrProxy))
@@ -563,12 +519,12 @@ match rules waiRequest =
           Just x -> pure $ Just (rule, x)
    in go rules
 
-matchRule :: MonadMatch m => Rule -> Request -> m (Maybe RedirectOrProxy)
+matchRule :: (MonadMatch m) => Rule -> Request -> m (Maybe RedirectOrProxy)
 matchRule rule request = case rule of
-  RuleDockerV1 dockerRule@DockerRuleV1 {ruleBackendRegistry} ->
-    matchDocker (dockerImageMatcherV1 dockerRule) ruleBackendRegistry request
-  RuleDockerV2 dockerRule@DockerRuleV2 {ruleBackendRegistry} ->
-    matchDocker (dockerImageMatcherV2 dockerRule) ruleBackendRegistry request
+  RuleDockerV1 dockerRule ->
+    matchDockerRuleV1 dockerRule request responseBuilder
+  RuleDockerV2 dockerRule ->
+    matchDockerRuleV2 dockerRule request responseBuilder
   RuleFlatfile flatfileRule ->
     matchFlatfile flatfileRule request
   RuleFileV2 fileRuleV2 ->
@@ -579,106 +535,16 @@ matchRule rule request = case rule of
     matchPython pythonRule request
   RuleScarfJs ->
     matchScarfJsPackageEvent request
-
--- | Given an image name, determine whether the image is a match.
--- Returns Either PackageId AutoCreationRuleId.
-type DockerImageMatcher = [Text] -> Maybe (Either Text Text)
-
--- | Matches an image specified in a 'DockerRuleV1'. Returns the package id
--- of the matched image.
-dockerImageMatcherV1 :: DockerRuleV1 -> DockerImageMatcher
-dockerImageMatcherV1 DockerRuleV1 {ruleImages} = \image ->
-  case HashMap.lookup image ruleImages of
-    Just packageId -> Just (Left packageId)
-    Nothing -> Nothing
-
--- | Matches an image based on a 'DockerRuleV1'. Returns the package-auto-creation-rule
--- id.
-dockerImageMatcherV2 :: DockerRuleV2 -> DockerImageMatcher
-dockerImageMatcherV2 DockerRuleV2 {ruleImagePattern, ruleRuleId} = \image ->
-  if ImagePattern.match ruleImagePattern image
-    then Just (Right ruleRuleId)
-    else Nothing
-
--- | Checks whether a 'Request' is a Docker request and determines
--- if the client supports redirects and fallbacks to proxying if not.
---
--- This is the Gateways core functionality, be careful when changing
--- this function.
---
--- See https://docs.docker.com/registry/spec/api/ for reference.
-matchDocker ::
-  MonadMatch m =>
-  DockerImageMatcher ->
-  -- | Backend registry
-  ByteString ->
-  Request ->
-  m (Maybe RedirectOrProxy)
-matchDocker matchImage backendRegistry Request {requestWai = request}
-  | "/v2/_catalog" <- rawPathInfo request =
-      pure $ Just (RespondNotFound emptyCapture)
-  | "/v2/" <- rawPathInfo request =
-      pure $ Just $ redirectOrProxy request backendRegistry emptyCapture
-  | ("v2" : image, _manifestsOrBlobsOrTags : reference : _) <-
-      break
-        (\x -> x == "manifests" || x == "blobs" || x == "tags")
-        (pathInfo request),
-    Just result <- matchImage image =
-      let !capture =
-            DockerCapture
-              { dockerCaptureImage = image,
-                dockerCaptureBackendRegistry = Text.decodeUtf8 backendRegistry,
-                dockerCaptureReference = reference,
-                dockerCapturePackage = either Just (const Nothing) result,
-                dockerCaptureAutoCreate = either (const Nothing) Just result
-              }
-       in pure $ Just $ redirectOrProxy request backendRegistry capture
-  | otherwise =
-      pure Nothing
   where
-    emptyCapture =
-      DockerCapture
-        { dockerCaptureImage = [],
-          dockerCaptureReference = "",
-          dockerCaptureBackendRegistry = Text.decodeUtf8 backendRegistry,
-          -- No package identified
-          dockerCapturePackage = Nothing,
-          -- Nothing to auto-create anyway
-          dockerCaptureAutoCreate = Nothing
+    responseBuilder =
+      Scarf.Gateway.Rule.Response.ResponseBuilder
+        { notFound = RespondNotFound,
+          redirectTo = RedirectTo,
+          proxyTo = ProxyTo
         }
 
--- | Quick and dirty heuristic whether the client supports redirects
--- or requires proxying.
-redirectOrProxy :: Wai.Request -> ByteString -> RuleCapture -> RedirectOrProxy
-redirectOrProxy request domain !capture
-  | shouldRedirectDockerRequest request =
-      -- As with the Host header we have to respect the proxy protocol
-      -- when redirecting.
-      let !absoluteUrl = "https://" <> domain <> rawPathInfo request
-       in RedirectTo capture absoluteUrl
-  | otherwise =
-      ProxyTo (const capture) domain
-
-shouldRedirectDockerRequest :: Wai.Request -> Bool
-shouldRedirectDockerRequest request
-  | Just userAgent <- requestHeaderUserAgent request =
-      "docker/"
-        `isPrefixOf` userAgent
-        || "Docker-Client"
-        `isInfixOf` userAgent
-        || "containerd/1.4.9"
-        `isInfixOf` userAgent
-        || "containerd/1.5.5"
-        `isInfixOf` userAgent
-        || "containerd/1.6"
-        `isInfixOf` userAgent
-        || "Watchtower (Docker)"
-        == userAgent
-  | otherwise =
-      False
-
 matchFlatfile ::
-  MonadMatch m =>
+  (MonadMatch m) =>
   FlatfileRule ->
   Request ->
   m (Maybe RedirectOrProxy)
@@ -728,7 +594,7 @@ matchFlatfile FlatfileRule {..} request@Request {requestPath, requestQueryString
     _ ->
       pure Nothing
 
-matchFileRuleV2 :: MonadMatch m => FileRuleV2 -> Request -> m (Maybe RedirectOrProxy)
+matchFileRuleV2 :: (MonadMatch m) => FileRuleV2 -> Request -> m (Maybe RedirectOrProxy)
 matchFileRuleV2 FileRuleV2 {..} Request {requestPath} =
   case Regex.match ruleIncomingPathRegex requestPath of
     Just xs
@@ -806,7 +672,7 @@ doQueriesMatch publicQuery requestQuery = do
 
 -- | Match a pixel tracking request.
 matchPixel ::
-  MonadMatch m =>
+  (MonadMatch m) =>
   PixelRule ->
   Request ->
   m (Maybe RedirectOrProxy)
@@ -868,7 +734,7 @@ ifNoneMatch request etag match noMatch
 
 -- | Match a python package request
 matchPython ::
-  MonadMatch m =>
+  (MonadMatch m) =>
   PythonRuleV1 ->
   Request ->
   m (Maybe RedirectOrProxy)
@@ -952,7 +818,7 @@ matchPython PythonRuleV1 {..} Request {requestWai = request}
 
 -- | Match a Scarfjs package install
 matchScarfJsPackageEvent ::
-  MonadMatch m =>
+  (MonadMatch m) =>
   Request ->
   m (Maybe RedirectOrProxy)
 matchScarfJsPackageEvent Request {requestWai = request}

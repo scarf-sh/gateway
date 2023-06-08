@@ -86,6 +86,9 @@ library
     Scarf.Gateway.Regex
     Scarf.Gateway.Rule
     Scarf.Gateway.Rule.Capture
+    Scarf.Gateway.Rule.Docker
+    Scarf.Gateway.Rule.Request
+    Scarf.Gateway.Rule.Response
     Scarf.Gateway.Sync
     Scarf.Gateway.URLTemplate
 
@@ -201,8 +204,10 @@ test-suite scarf-gateway-test
     , case-insensitive
     , containers
     , filepath
+    , internal
+    , manifest
     , network-uri
-    , scarf-gateway:{scarf-gateway, internal, manifest}
+    , scarf-gateway
     , tasty
     , tasty-golden
     , tasty-hunit

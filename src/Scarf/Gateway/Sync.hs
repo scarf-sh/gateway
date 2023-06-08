@@ -98,7 +98,7 @@ type DomainLookup =
 -- | This function goes out to Redis and fetches the info
 -- necessary to resolve backend urls for Docker and Flatfile
 -- packages.
-fetchDomainMapping :: MonadIO m => ActiveSpan -> SyncConfig -> GetIfChanged f -> m (f DomainLookup)
+fetchDomainMapping :: (MonadIO m) => ActiveSpan -> SyncConfig -> GetIfChanged f -> m (f DomainLookup)
 fetchDomainMapping span SyncConfig {..} getIfChanged = do
   let buildDomainMapping domainRules =
         let mapping =
@@ -121,11 +121,11 @@ fetchDomainMapping span SyncConfig {..} getIfChanged = do
 -- | Spin up a background worker that ensures there is up-to-date mapping info
 -- available at all times.
 withBackgroundSync ::
-  MonadUnliftIO m =>
+  (MonadUnliftIO m) =>
   ActiveSpan ->
   Tracer ->
   SyncConfig ->
-  (IO Bool -> (forall m. MonadIO m => m DomainLookup) -> m r) ->
+  (IO Bool -> (forall m. (MonadIO m) => m DomainLookup) -> m r) ->
   m r
 withBackgroundSync span tracer syncConfig@SyncConfig {..} withLookup = do
   -- Fetch an initial mapping synchronously. This ensures we can
