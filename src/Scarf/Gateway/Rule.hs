@@ -53,7 +53,7 @@ import Network.Wai
     requestMethod,
   )
 import Network.Wai qualified as Wai
-import Network.Wai.Internal (Response (..))
+import Network.Wai.Internal (Response)
 import Scarf.Gateway.ImagePattern qualified as ImagePattern
 import Scarf.Gateway.Regex qualified as Regex
 import Scarf.Gateway.Rule.Capture (RuleCapture (..))
@@ -65,7 +65,7 @@ import Scarf.Gateway.Rule.Docker
   )
 import Scarf.Gateway.Rule.Monad (MonadMatch, runMatch)
 import Scarf.Gateway.Rule.Request (Request (..), newRequest)
-import Scarf.Gateway.Rule.Response (ResponseBuilder (..))
+import Scarf.Gateway.Rule.Response (ResponseBuilder (..), ResponseHeaders (..))
 import Scarf.Gateway.URLTemplate (URLTemplate)
 import Scarf.Gateway.URLTemplate qualified as URLTemplate
 
@@ -208,13 +208,6 @@ instance Ord Rule where
     (RuleScarfJs, RuleScarfJs) -> EQ
     (RuleScarfJs, _) -> LT
     (_, RuleScarfJs) -> GT
-
-data ResponseHeaders = ResponseHeaders
-  { contentType :: ByteString,
-    contentLength :: Maybe Int,
-    etag :: Maybe ByteString,
-    cacheControl :: Maybe ByteString
-  }
 
 -- | Indicates whether a request needs to be redirect to or proxied.
 data RedirectOrProxy
@@ -495,52 +488,46 @@ match ::
   (MonadMatch m) =>
   [Rule] ->
   Wai.Request ->
-  m (Maybe (Rule, RedirectOrProxy))
-match rules waiRequest =
+  ResponseBuilder response ->
+  m (Maybe (Rule, response))
+match rules waiRequest responseBuilder =
   let request :: Request
       request =
         newRequest waiRequest
 
-      go :: [Rule] -> IO (Maybe (Rule, RedirectOrProxy))
       go [] =
         pure Nothing
       go (rule : rules) = do
-        result <- matchRule rule request
+        result <- matchRule rule request responseBuilder
         case result of
           Nothing -> go rules
           Just x -> pure $ Just (rule, x)
    in go rules
 
-matchRule :: (MonadMatch m) => Rule -> Request -> m (Maybe RedirectOrProxy)
-matchRule rule request = case rule of
+matchRule :: (MonadMatch m) => Rule -> Request -> ResponseBuilder response -> m (Maybe response)
+matchRule rule request responseBuilder = case rule of
   RuleDockerV1 dockerRule ->
     matchDockerRuleV1 dockerRule request responseBuilder
   RuleDockerV2 dockerRule ->
     matchDockerRuleV2 dockerRule request responseBuilder
   RuleFlatfile flatfileRule ->
-    matchFlatfile flatfileRule request
+    matchFlatfile flatfileRule request responseBuilder
   RuleFileV2 fileRuleV2 ->
-    matchFileRuleV2 fileRuleV2 request
+    matchFileRuleV2 fileRuleV2 request responseBuilder
   RulePixel pixelRule ->
-    matchPixel pixelRule request
+    matchPixel pixelRule request responseBuilder
   RulePythonV1 pythonRule ->
-    matchPython pythonRule request
+    matchPython pythonRule request responseBuilder
   RuleScarfJs ->
-    matchScarfJsPackageEvent request
-  where
-    responseBuilder =
-      Scarf.Gateway.Rule.Response.ResponseBuilder
-        { notFound = RespondNotFound,
-          redirectTo = RedirectTo,
-          proxyTo = ProxyTo
-        }
+    matchScarfJsPackageEvent request responseBuilder
 
 matchFlatfile ::
   (MonadMatch m) =>
   FlatfileRule ->
   Request ->
-  m (Maybe RedirectOrProxy)
-matchFlatfile FlatfileRule {..} request@Request {requestPath, requestQueryString} =
+  ResponseBuilder response ->
+  m (Maybe response)
+matchFlatfile FlatfileRule {..} request@Request {requestPath, requestQueryString} ResponseBuilder {..} =
   case URLTemplate.match rulePublicTemplate (requestPath <> requestQueryString) of
     xs@(_ : _)
       | let extracted = HashMap.fromList xs,
@@ -549,7 +536,7 @@ matchFlatfile FlatfileRule {..} request@Request {requestPath, requestQueryString
           let !absoluteUrl = Text.encodeUtf8 expanded
           pure
             ( Just
-                ( RedirectTo
+                ( redirectTo
                     ( FlatfileCapture
                         { filePackage = rulePackage,
                           fileAbsoluteUrl = absoluteUrl,
@@ -573,7 +560,7 @@ matchFlatfile FlatfileRule {..} request@Request {requestPath, requestQueryString
           let !absoluteUrl = Text.encodeUtf8 ruleBackendExpanded
           pure
             ( Just
-                ( RedirectTo
+                ( redirectTo
                     ( FlatfileCapture
                         { filePackage = rulePackage,
                           fileAbsoluteUrl = absoluteUrl,
@@ -586,8 +573,13 @@ matchFlatfile FlatfileRule {..} request@Request {requestPath, requestQueryString
     _ ->
       pure Nothing
 
-matchFileRuleV2 :: (MonadMatch m) => FileRuleV2 -> Request -> m (Maybe RedirectOrProxy)
-matchFileRuleV2 FileRuleV2 {..} Request {requestPath} =
+matchFileRuleV2 ::
+  (MonadMatch m) =>
+  FileRuleV2 ->
+  Request ->
+  ResponseBuilder response ->
+  m (Maybe response)
+matchFileRuleV2 FileRuleV2 {..} Request {requestPath} ResponseBuilder {..} =
   case Regex.match ruleIncomingPathRegex requestPath of
     Just xs
       | let extracted = HashMap.fromList xs,
@@ -596,7 +588,7 @@ matchFileRuleV2 FileRuleV2 {..} Request {requestPath} =
           let !absoluteUrl = Text.encodeUtf8 expanded
           pure
             ( Just
-                ( RedirectTo
+                ( redirectTo
                     ( FlatfileCapture
                         { filePackage = rulePackage,
                           fileAbsoluteUrl = absoluteUrl,
@@ -615,7 +607,7 @@ matchFileRuleV2 FileRuleV2 {..} Request {requestPath} =
           let !absoluteUrl = Text.encodeUtf8 ruleBackendExpanded
           pure
             ( Just
-                ( RedirectTo
+                ( redirectTo
                     ( FlatfileCapture
                         { filePackage = rulePackage,
                           fileAbsoluteUrl = absoluteUrl,
@@ -667,8 +659,9 @@ matchPixel ::
   (MonadMatch m) =>
   PixelRule ->
   Request ->
-  m (Maybe RedirectOrProxy)
-matchPixel PixelRule {..} Request {requestWai}
+  ResponseBuilder response ->
+  m (Maybe response)
+matchPixel PixelRule {..} Request {requestWai} ResponseBuilder {bytes}
   | "GET" == requestMethod requestWai,
     "a.png" : _ <- pathInfo requestWai = do
       -- N.B. Strict to avoid returning thunks.
@@ -680,7 +673,7 @@ matchPixel PixelRule {..} Request {requestWai}
                 PixelCapture ""
       pure $
         Just
-          ( RespondBytes
+          ( bytes
               capture
               ( ResponseHeaders
                   { contentType = ruleTransparentImageContentType,
@@ -729,8 +722,9 @@ matchPython ::
   (MonadMatch m) =>
   PythonRuleV1 ->
   Request ->
-  m (Maybe RedirectOrProxy)
-matchPython PythonRuleV1 {..} Request {requestWai = request}
+  ResponseBuilder response ->
+  m (Maybe response)
+matchPython PythonRuleV1 {..} Request {requestWai = request} ResponseBuilder {..}
   | not isHead && not isGet =
       pure Nothing
   | ["simple", ""] <- pathInfo request,
@@ -746,11 +740,11 @@ matchPython PythonRuleV1 {..} Request {requestWai = request}
           ifNoneMatch
             request
             ruleEtag
-            ( RespondNotModified
+            ( notModified
                 capture
                 ruleEtag
             )
-            ( RespondBytes
+            ( bytes
                 capture
                 ( ResponseHeaders
                     { contentType = "text/html",
@@ -775,11 +769,11 @@ matchPython PythonRuleV1 {..} Request {requestWai = request}
           ifNoneMatch
             request
             packageEtag
-            ( RespondNotModified
+            ( notModified
                 capture
                 packageEtag
             )
-            ( RespondBytes
+            ( bytes
                 capture
                 ( ResponseHeaders
                     { contentType = "text/html",
@@ -801,7 +795,9 @@ matchPython PythonRuleV1 {..} Request {requestWai = request}
               pythonCaptureFileName = Just fileName,
               pythonCaptureFileBackendURL = Just fileBackendURL
             } =
-      pure $ Just $ RedirectTo capture $ Text.encodeUtf8 fileBackendURL
+      pure $
+        Just $
+          redirectTo capture (Text.encodeUtf8 fileBackendURL)
   | otherwise =
       pure Nothing
   where
@@ -812,16 +808,17 @@ matchPython PythonRuleV1 {..} Request {requestWai = request}
 matchScarfJsPackageEvent ::
   (MonadMatch m) =>
   Request ->
-  m (Maybe RedirectOrProxy)
-matchScarfJsPackageEvent Request {requestWai = request}
+  ResponseBuilder response ->
+  m (Maybe response)
+matchScarfJsPackageEvent Request {requestWai = request} ResponseBuilder {..}
   | "package-event" : "install" : rest <- pathInfo request = do
       body <- parseBody
       case body of
         Nothing ->
-          pure (Just RespondInvalidRequest)
+          pure (Just invalidRequest)
         Just _value
           | "POST" /= requestMethod request ->
-              pure (Just RespondMethodNotAllowed)
+              pure (Just methodNotAllowed)
         Just value ->
           let !capture =
                 ScarfJsCapture
@@ -832,7 +829,7 @@ matchScarfJsPackageEvent Request {requestWai = request}
                   }
            in pure
                 ( Just
-                    ( RespondBytes
+                    ( bytes
                         capture
                         ( ResponseHeaders
                             { contentType = "application/json",

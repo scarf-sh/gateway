@@ -58,8 +58,7 @@ import Network.Wai
 import Network.Wai qualified as Wai
 import OpenTracing.Tracer (traced_)
 import Scarf.Gateway.Rule
-  ( RedirectOrProxy (..),
-    ResponseHeaders (..),
+  ( ResponseHeaders (..),
     Rule,
     RuleCapture (..),
     newDockerRuleV1,
@@ -70,6 +69,7 @@ import Scarf.Gateway.Rule
     newScarfJsRule,
   )
 import Scarf.Gateway.Rule qualified as Rule
+import Scarf.Gateway.Rule.Response qualified
 import Scarf.Lib.Tracing
   ( ActiveSpan,
     Tag,
@@ -129,45 +129,53 @@ gateway tracer GatewayConfig {..} = do
 
     rules <- gatewayDomainRules span host
     match <- traced_ tracer (spanOpts "match-rules" (childOf span)) $ \span -> do
-      result <- Rule.runMatch (Rule.match rules request)
+      result <-
+        Rule.runMatch $
+          Rule.match
+            rules
+            request
+            ( Scarf.Gateway.Rule.Response.ResponseBuilder
+                { redirectTo = \capture absoluteUrl -> \_tracer span request respond ->
+                    redirectTo tracer span absoluteUrl request respond
+                      `finally` gatewayReportRequest span request found302 (Just capture),
+                  proxyTo = \newCapture domain -> \_tracer span request respond ->
+                    let (targetDomain, shouldUseTLS) = gatewayModifyProxyDomain domain
+                     in gatewayProxyTo
+                          span
+                          shouldUseTLS
+                          targetDomain
+                          request
+                          $ \response -> do
+                            let !status = responseStatus response
+                                !capture = newCapture response
+                            respond response
+                              `finally` gatewayReportRequest span request status (Just capture),
+                  bytes = \capture headers bytes -> \tracer span request respond ->
+                    respondBytes tracer span headers bytes request respond
+                      `finally` gatewayReportRequest span request ok200 (Just capture),
+                  notFound = \capture -> \_tracer span request respond ->
+                    notFound request respond
+                      `finally` gatewayReportRequest span request notFound404 (Just capture),
+                  notModified = \capture etag -> \tracer span request respond ->
+                    notModified tracer span etag request respond
+                      `finally` gatewayReportRequest span request notModified304 (Just capture),
+                  methodNotAllowed = \tracer span request respond ->
+                    methodNotAllowed tracer span request respond
+                      `finally` gatewayReportRequest span request methodNotAllowed405 Nothing,
+                  invalidRequest = \tracer span request respond ->
+                    invalidRequest tracer span request respond
+                      `finally` gatewayReportRequest span request unprocessableEntity422 Nothing
+                }
+            )
+
       addTag span $ case result of
         Nothing -> NoMatch
         Just {} -> Match
       pure result
 
     case match of
-      Just (_rule, redirectOrProxy) -> do
-        case redirectOrProxy of
-          RedirectTo capture absoluteUrl ->
-            redirectTo tracer span absoluteUrl request respond
-              `finally` gatewayReportRequest span request found302 (Just capture)
-          ProxyTo mkCapture domain ->
-            let (targetDomain, shouldUseTLS) = gatewayModifyProxyDomain domain
-             in gatewayProxyTo
-                  span
-                  shouldUseTLS
-                  targetDomain
-                  request
-                  $ \response -> do
-                    let !status = responseStatus response
-                        !capture = mkCapture response
-                    respond response
-                      `finally` gatewayReportRequest span request status (Just capture)
-          RespondBytes capture headers bytes ->
-            respondBytes tracer span headers bytes request respond
-              `finally` gatewayReportRequest span request ok200 (Just capture)
-          RespondNotFound capture ->
-            notFound request respond
-              `finally` gatewayReportRequest span request notFound404 (Just capture)
-          RespondNotModified capture etag ->
-            notModified tracer span etag request respond
-              `finally` gatewayReportRequest span request notModified304 (Just capture)
-          RespondMethodNotAllowed ->
-            methodNotAllowed tracer span request respond
-              `finally` gatewayReportRequest span request methodNotAllowed405 Nothing
-          RespondInvalidRequest ->
-            invalidRequest tracer span request respond
-              `finally` gatewayReportRequest span request unprocessableEntity422 Nothing
+      Just (_rule, respondApp) ->
+        respondApp tracer span request respond
       Nothing ->
         notFound request respond
           `finally` gatewayReportRequest span request notFound404 Nothing
