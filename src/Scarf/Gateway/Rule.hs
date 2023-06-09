@@ -63,19 +63,11 @@ import Scarf.Gateway.Rule.Docker
     matchDockerRuleV1,
     matchDockerRuleV2,
   )
+import Scarf.Gateway.Rule.Monad (MonadMatch, runMatch)
 import Scarf.Gateway.Rule.Request (Request (..), newRequest)
 import Scarf.Gateway.Rule.Response (ResponseBuilder (..))
 import Scarf.Gateway.URLTemplate (URLTemplate)
 import Scarf.Gateway.URLTemplate qualified as URLTemplate
-
--- | The monad the rule matchers operate in.
--- TODO for now it's IO but it will need to become a bit
--- more elaborate.
-type MonadMatch m = (m ~ IO)
-
--- | Run a MonadMatch into IO.
-runMatch :: (MonadMatch m) => m a -> IO a
-runMatch = id
 
 data FlatfileRule = FlatfileRule
   { -- | Package this rule belongs to.

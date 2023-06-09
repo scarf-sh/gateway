@@ -87,6 +87,7 @@ library
     Scarf.Gateway.Rule
     Scarf.Gateway.Rule.Capture
     Scarf.Gateway.Rule.Docker
+    Scarf.Gateway.Rule.Monad
     Scarf.Gateway.Rule.Request
     Scarf.Gateway.Rule.Response
     Scarf.Gateway.Sync

@@ -21,6 +21,7 @@ import Data.Text.Encoding qualified as Text
 import Network.Wai qualified as Wai
 import Scarf.Gateway.ImagePattern as ImagePattern
 import Scarf.Gateway.Rule.Capture (RuleCapture (..))
+import Scarf.Gateway.Rule.Monad (MonadMatch)
 import Scarf.Gateway.Rule.Request (Request (..))
 import Scarf.Gateway.Rule.Response (ResponseBuilder (..))
 
@@ -81,8 +82,6 @@ matchDockerRuleV2 DockerRuleV2 {ruleImagePattern, ruleRuleId, ruleBackendRegistr
           else Nothing
     )
     ruleBackendRegistry
-
-type MonadMatch m = m ~ IO
 
 -- | Checks whether a 'Request' is a Docker request and determines
 -- if the client supports redirects and fallbacks to proxying if not.
