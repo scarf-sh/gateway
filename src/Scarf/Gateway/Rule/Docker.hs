@@ -15,11 +15,13 @@ import Data.ByteString (ByteString)
 import Data.ByteString qualified as ByteString
 import Data.HashMap.Strict (HashMap)
 import Data.HashMap.Strict qualified as HashMap
+import Data.List qualified as List
 import Data.Text (Text)
 import Data.Text.Encoding qualified as Text
 import Network.Wai qualified as Wai
 import Scarf.Gateway.ImagePattern as ImagePattern
 import Scarf.Gateway.Rule.Capture (RuleCapture (..))
+import Scarf.Gateway.Rule.Monad (MonadMatch)
 import Scarf.Gateway.Rule.Request (Request (..))
 import Scarf.Gateway.Rule.Response (ResponseBuilder (..))
 
@@ -81,8 +83,6 @@ matchDockerRuleV2 DockerRuleV2 {ruleImagePattern, ruleRuleId, ruleBackendRegistr
     )
     ruleBackendRegistry
 
-type MonadMatch m = m ~ IO
-
 -- | Checks whether a 'Request' is a Docker request and determines
 -- if the client supports redirects and fallbacks to proxying if not.
 --
@@ -98,26 +98,66 @@ matchDocker ::
   Request ->
   ResponseBuilder response ->
   m (Maybe response)
-matchDocker matchImage backendRegistry Request {requestWai = request} responseBuilder@ResponseBuilder {..}
-  | "/v2/_catalog" <- Wai.rawPathInfo request =
+matchDocker matchImage backendRegistry Request {requestWai = request} responseBuilder@ResponseBuilder {..} =
+  case Wai.pathInfo request of
+    -- /v2/_catalog
+    ["v2", "_catalog"] ->
       pure $ Just (notFound emptyCapture)
-  | "/v2/" <- Wai.rawPathInfo request =
-      pure $ Just $ redirectOrProxy request backendRegistry emptyCapture responseBuilder
-  | ("v2" : image, _manifestsOrBlobsOrTags : reference : _) <-
-      break
-        (\x -> x == "manifests" || x == "blobs" || x == "tags")
-        (Wai.pathInfo request),
-    Just result <- matchImage image =
-      let !capture =
-            DockerCapture
-              { dockerCaptureImage = image,
-                dockerCaptureBackendRegistry = Text.decodeUtf8 backendRegistry,
-                dockerCaptureReference = reference,
-                dockerCapturePackage = either Just (const Nothing) result,
-                dockerCaptureAutoCreate = either (const Nothing) Just result
-              }
-       in pure $ Just $ redirectOrProxy request backendRegistry capture responseBuilder
-  | otherwise =
+    -- /v2
+    ["v2"] ->
+      pure $
+        Just
+          ( redirectOrProxy
+              request
+              backendRegistry
+              emptyCapture
+              responseBuilder
+          )
+    -- /v2/
+    ["v2", ""] ->
+      pure $
+        Just
+          ( redirectOrProxy
+              request
+              backendRegistry
+              emptyCapture
+              responseBuilder
+          )
+    "v2" : path
+      -- e.g. /v2/library/hello-world/manifests/latest
+      | (image, "manifests" : tagOrDigest : _) <- List.break (== "manifests") path,
+        Just packageIdOrAutoCreationId <- matchImage image ->
+          pure $
+            Just
+              ( redirectOrProxy
+                  request
+                  backendRegistry
+                  (dockerCapture image tagOrDigest packageIdOrAutoCreationId)
+                  responseBuilder
+              )
+      -- e.g. /v2/library/hello-world/blobs/sha256:1234567
+      | (image, "blobs" : digest : _) <- List.break (== "blobs") path,
+        Just packageIdOrAutoCreationId <- matchImage image ->
+          pure $
+            Just
+              ( redirectOrProxy
+                  request
+                  backendRegistry
+                  (dockerCapture image digest packageIdOrAutoCreationId)
+                  responseBuilder
+              )
+      -- e.g. /v2/library/hello-world/tags/list
+      | (image, ["tags", "list"]) <- List.break (== "tags") path,
+        Just _packageIdOrAutoCreationId <- matchImage image ->
+          pure $
+            Just
+              ( redirectOrProxy
+                  request
+                  backendRegistry
+                  emptyCapture
+                  responseBuilder
+              )
+    _ ->
       pure Nothing
   where
     emptyCapture =
@@ -129,6 +169,15 @@ matchDocker matchImage backendRegistry Request {requestWai = request} responseBu
           dockerCapturePackage = Nothing,
           -- Nothing to auto-create anyway
           dockerCaptureAutoCreate = Nothing
+        }
+
+    dockerCapture image tagOrDigest packageIdOrAutoCreationId =
+      DockerCapture
+        { dockerCaptureImage = image,
+          dockerCaptureBackendRegistry = Text.decodeUtf8 backendRegistry,
+          dockerCaptureReference = tagOrDigest,
+          dockerCapturePackage = either Just (const Nothing) packageIdOrAutoCreationId,
+          dockerCaptureAutoCreate = either (const Nothing) Just packageIdOrAutoCreationId
         }
 
 redirectOrProxy ::
@@ -144,7 +193,7 @@ redirectOrProxy request domain !capture ResponseBuilder {..}
       let !absoluteUrl = "https://" <> domain <> Wai.rawPathInfo request
        in redirectTo capture absoluteUrl
   | otherwise =
-      proxyTo (const capture) domain
+      proxyTo (const capture) (\response -> response) domain
 
 shouldRedirectDockerRequest :: Wai.Request -> Bool
 shouldRedirectDockerRequest request

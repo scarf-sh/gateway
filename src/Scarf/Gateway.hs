@@ -23,7 +23,6 @@ module Scarf.Gateway
   )
 where
 
-import Control.Applicative ((<|>))
 import Control.Exception (finally)
 import Control.Monad.Fix (fix)
 import Data.Aeson (encode, object, (.=))
@@ -31,7 +30,6 @@ import Data.ByteString (ByteString)
 import Data.ByteString.Builder.Extra (byteStringInsert, lazyByteStringInsert)
 import Data.ByteString.Char8 qualified as BS
 import Data.ByteString.Lazy qualified as LBS
-import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import Data.Text.Encoding qualified as Text
 import Network.HTTP.Client (Manager)
@@ -48,9 +46,10 @@ import Network.HTTP.Types
   )
 import Network.Wai
   ( Application,
-    Request (..),
-    requestHeaderHost,
-    requestHeaders,
+    pathInfo,
+    rawPathInfo,
+    rawQueryString,
+    requestMethod,
     responseBuilder,
     responseLBS,
     responseStatus,
@@ -58,8 +57,7 @@ import Network.Wai
 import Network.Wai qualified as Wai
 import OpenTracing.Tracer (traced_)
 import Scarf.Gateway.Rule
-  ( RedirectOrProxy (..),
-    ResponseHeaders (..),
+  ( ResponseHeaders (..),
     Rule,
     RuleCapture (..),
     newDockerRuleV1,
@@ -70,6 +68,8 @@ import Scarf.Gateway.Rule
     newScarfJsRule,
   )
 import Scarf.Gateway.Rule qualified as Rule
+import Scarf.Gateway.Rule.Request (Request (..), newRequest)
+import Scarf.Gateway.Rule.Response qualified
 import Scarf.Lib.Tracing
   ( ActiveSpan,
     Tag,
@@ -93,7 +93,7 @@ data GatewayConfig = GatewayConfig
     -- Request values to Text.
     gatewayDomainRules :: ActiveSpan -> ByteString -> IO [Rule],
     -- | How to report a request.
-    gatewayReportRequest :: ActiveSpan -> Request -> Status -> Maybe RuleCapture -> IO (),
+    gatewayReportRequest :: ActiveSpan -> Wai.Request -> Status -> Maybe RuleCapture -> IO (),
     -- | An 'Application' that proxies requests to the given host.
     gatewayProxyTo ::
       ActiveSpan ->
@@ -117,57 +117,61 @@ gateway ::
   Application
 gateway tracer GatewayConfig {..} = do
   traceWaiApplication tracer $ \span -> \request respond -> do
-    -- Here comes the meat: We got a request, now figure out whether this is a
-    -- Docker or Flatfile request and do the appropriate redirect (or not).
-    let host :: ByteString
-        host =
-          fromMaybe "" $
-            lookup "X-Forwarded-Host" (requestHeaders request)
-              <|> requestHeaderHost request
+    let scarfRequest@Request {requestHost = host} =
+          newRequest request
 
     addTag span ("host", StringT (Text.decodeUtf8 host))
 
     rules <- gatewayDomainRules span host
     match <- traced_ tracer (spanOpts "match-rules" (childOf span)) $ \span -> do
-      result <- Rule.runMatch (Rule.match rules request)
+      result <-
+        Rule.runMatch $
+          Rule.match
+            rules
+            scarfRequest
+            ( Scarf.Gateway.Rule.Response.ResponseBuilder
+                { redirectTo = \capture absoluteUrl -> \_tracer span request respond ->
+                    redirectTo tracer span absoluteUrl request respond
+                      `finally` gatewayReportRequest span request found302 (Just capture),
+                  proxyTo = \newCapture modifyResponse domain -> \_tracer span request respond ->
+                    let (targetDomain, shouldUseTLS) = gatewayModifyProxyDomain domain
+                     in gatewayProxyTo
+                          span
+                          shouldUseTLS
+                          targetDomain
+                          request
+                          $ \unmodifiedResponse -> do
+                            let response = modifyResponse unmodifiedResponse
+                                !status = responseStatus response
+                                !capture = newCapture response
+                            respond response
+                              `finally` gatewayReportRequest span request status (Just capture),
+                  bytes = \capture headers bytes -> \tracer span request respond ->
+                    respondBytes tracer span headers bytes request respond
+                      `finally` gatewayReportRequest span request ok200 (Just capture),
+                  notFound = \capture -> \_tracer span request respond ->
+                    notFound request respond
+                      `finally` gatewayReportRequest span request notFound404 (Just capture),
+                  notModified = \capture etag -> \tracer span request respond ->
+                    notModified tracer span etag request respond
+                      `finally` gatewayReportRequest span request notModified304 (Just capture),
+                  methodNotAllowed = \tracer span request respond ->
+                    methodNotAllowed tracer span request respond
+                      `finally` gatewayReportRequest span request methodNotAllowed405 Nothing,
+                  invalidRequest = \tracer span request respond ->
+                    invalidRequest tracer span request respond
+                      `finally` gatewayReportRequest span request unprocessableEntity422 Nothing
+                }
+            )
+
       addTag span $ case result of
         Nothing -> NoMatch
         Just {} -> Match
       pure result
 
     case match of
-      Just (_rule, redirectOrProxy) -> do
-        case redirectOrProxy of
-          RedirectTo capture absoluteUrl ->
-            redirectTo tracer span absoluteUrl request respond
-              `finally` gatewayReportRequest span request found302 (Just capture)
-          ProxyTo mkCapture domain ->
-            let (targetDomain, shouldUseTLS) = gatewayModifyProxyDomain domain
-             in gatewayProxyTo
-                  span
-                  shouldUseTLS
-                  targetDomain
-                  request
-                  $ \response -> do
-                    let !status = responseStatus response
-                        !capture = mkCapture response
-                    respond response
-                      `finally` gatewayReportRequest span request status (Just capture)
-          RespondBytes capture headers bytes ->
-            respondBytes tracer span headers bytes request respond
-              `finally` gatewayReportRequest span request ok200 (Just capture)
-          RespondNotFound capture ->
-            notFound request respond
-              `finally` gatewayReportRequest span request notFound404 (Just capture)
-          RespondNotModified capture etag ->
-            notModified tracer span etag request respond
-              `finally` gatewayReportRequest span request notModified304 (Just capture)
-          RespondMethodNotAllowed ->
-            methodNotAllowed tracer span request respond
-              `finally` gatewayReportRequest span request methodNotAllowed405 Nothing
-          RespondInvalidRequest ->
-            invalidRequest tracer span request respond
-              `finally` gatewayReportRequest span request unprocessableEntity422 Nothing
+      Just (_rule, respondApp) ->
+        respondApp tracer span request respond
       Nothing ->
         notFound request respond
           `finally` gatewayReportRequest span request notFound404 Nothing

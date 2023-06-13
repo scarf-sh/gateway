@@ -1,11 +1,20 @@
 module Scarf.Gateway.Rule.Response
   ( ResponseBuilder (..),
+    ResponseHeaders (..),
   )
 where
 
 import Data.ByteString (ByteString)
+import Data.ByteString.Lazy qualified as LBS
 import Network.Wai qualified as Wai
 import Scarf.Gateway.Rule.Capture (RuleCapture)
+
+data ResponseHeaders = ResponseHeaders
+  { contentType :: ByteString,
+    contentLength :: Maybe Int,
+    etag :: Maybe ByteString,
+    cacheControl :: Maybe ByteString
+  }
 
 -- | Allows building an abstract response from the rule matchers. Keeping the
 -- response abstract helps keeps us honest and eases testing.
@@ -23,6 +32,22 @@ data ResponseBuilder response = ResponseBuilder
     -- the upstream response.
     proxyTo ::
       (Wai.Response -> RuleCapture) ->
+      (Wai.Response -> Wai.Response) ->
       ByteString ->
+      response,
+    -- | Respond with bytes directly.
+    bytes ::
+      RuleCapture ->
+      ResponseHeaders ->
+      LBS.ByteString ->
+      response,
+    -- | Etag for caching
+    notModified ::
+      RuleCapture ->
+      ByteString ->
+      response,
+    methodNotAllowed ::
+      response,
+    invalidRequest ::
       response
   }
