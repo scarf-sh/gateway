@@ -23,7 +23,6 @@ module Scarf.Gateway
   )
 where
 
-import Control.Applicative ((<|>))
 import Control.Exception (finally)
 import Control.Monad.Fix (fix)
 import Data.Aeson (encode, object, (.=))
@@ -31,7 +30,6 @@ import Data.ByteString (ByteString)
 import Data.ByteString.Builder.Extra (byteStringInsert, lazyByteStringInsert)
 import Data.ByteString.Char8 qualified as BS
 import Data.ByteString.Lazy qualified as LBS
-import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import Data.Text.Encoding qualified as Text
 import Network.HTTP.Client (Manager)
@@ -48,9 +46,10 @@ import Network.HTTP.Types
   )
 import Network.Wai
   ( Application,
-    Request (..),
-    requestHeaderHost,
-    requestHeaders,
+    pathInfo,
+    rawPathInfo,
+    rawQueryString,
+    requestMethod,
     responseBuilder,
     responseLBS,
     responseStatus,
@@ -69,6 +68,7 @@ import Scarf.Gateway.Rule
     newScarfJsRule,
   )
 import Scarf.Gateway.Rule qualified as Rule
+import Scarf.Gateway.Rule.Request (Request (..), newRequest)
 import Scarf.Gateway.Rule.Response qualified
 import Scarf.Lib.Tracing
   ( ActiveSpan,
@@ -93,7 +93,7 @@ data GatewayConfig = GatewayConfig
     -- Request values to Text.
     gatewayDomainRules :: ActiveSpan -> ByteString -> IO [Rule],
     -- | How to report a request.
-    gatewayReportRequest :: ActiveSpan -> Request -> Status -> Maybe RuleCapture -> IO (),
+    gatewayReportRequest :: ActiveSpan -> Wai.Request -> Status -> Maybe RuleCapture -> IO (),
     -- | An 'Application' that proxies requests to the given host.
     gatewayProxyTo ::
       ActiveSpan ->
@@ -117,13 +117,8 @@ gateway ::
   Application
 gateway tracer GatewayConfig {..} = do
   traceWaiApplication tracer $ \span -> \request respond -> do
-    -- Here comes the meat: We got a request, now figure out whether this is a
-    -- Docker or Flatfile request and do the appropriate redirect (or not).
-    let host :: ByteString
-        host =
-          fromMaybe "" $
-            lookup "X-Forwarded-Host" (requestHeaders request)
-              <|> requestHeaderHost request
+    let scarfRequest@Request {requestHost = host} =
+          newRequest request
 
     addTag span ("host", StringT (Text.decodeUtf8 host))
 
@@ -133,7 +128,7 @@ gateway tracer GatewayConfig {..} = do
         Rule.runMatch $
           Rule.match
             rules
-            request
+            scarfRequest
             ( Scarf.Gateway.Rule.Response.ResponseBuilder
                 { redirectTo = \capture absoluteUrl -> \_tracer span request respond ->
                     redirectTo tracer span absoluteUrl request respond

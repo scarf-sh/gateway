@@ -64,7 +64,7 @@ import Scarf.Gateway.Rule.Docker
     matchDockerRuleV2,
   )
 import Scarf.Gateway.Rule.Monad (MonadMatch, runMatch)
-import Scarf.Gateway.Rule.Request (Request (..), newRequest)
+import Scarf.Gateway.Rule.Request (Request (..))
 import Scarf.Gateway.Rule.Response (ResponseBuilder (..), ResponseHeaders (..))
 import Scarf.Gateway.URLTemplate (URLTemplate)
 import Scarf.Gateway.URLTemplate qualified as URLTemplate
@@ -487,15 +487,11 @@ optimizeRules (rule : rules) =
 match ::
   (MonadMatch m) =>
   [Rule] ->
-  Wai.Request ->
+  Request ->
   ResponseBuilder response ->
   m (Maybe (Rule, response))
-match rules waiRequest responseBuilder =
-  let request :: Request
-      request =
-        newRequest waiRequest
-
-      go [] =
+match rules request responseBuilder =
+  let go [] =
         pure Nothing
       go (rule : rules) = do
         result <- matchRule rule request responseBuilder
