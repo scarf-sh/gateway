@@ -193,7 +193,7 @@ redirectOrProxy request domain !capture ResponseBuilder {..}
       let !absoluteUrl = "https://" <> domain <> Wai.rawPathInfo request
        in redirectTo capture absoluteUrl
   | otherwise =
-      proxyTo (const capture) domain
+      proxyTo (const capture) (\response -> response) domain
 
 shouldRedirectDockerRequest :: Wai.Request -> Bool
 shouldRedirectDockerRequest request

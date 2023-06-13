@@ -138,15 +138,16 @@ gateway tracer GatewayConfig {..} = do
                 { redirectTo = \capture absoluteUrl -> \_tracer span request respond ->
                     redirectTo tracer span absoluteUrl request respond
                       `finally` gatewayReportRequest span request found302 (Just capture),
-                  proxyTo = \newCapture domain -> \_tracer span request respond ->
+                  proxyTo = \newCapture modifyResponse domain -> \_tracer span request respond ->
                     let (targetDomain, shouldUseTLS) = gatewayModifyProxyDomain domain
                      in gatewayProxyTo
                           span
                           shouldUseTLS
                           targetDomain
                           request
-                          $ \response -> do
-                            let !status = responseStatus response
+                          $ \unmodifiedResponse -> do
+                            let response = modifyResponse unmodifiedResponse
+                                !status = responseStatus response
                                 !capture = newCapture response
                             respond response
                               `finally` gatewayReportRequest span request status (Just capture),

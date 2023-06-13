@@ -32,6 +32,7 @@ data ResponseBuilder response = ResponseBuilder
     -- the upstream response.
     proxyTo ::
       (Wai.Response -> RuleCapture) ->
+      (Wai.Response -> Wai.Response) ->
       ByteString ->
       response,
     -- | Respond with bytes directly.
