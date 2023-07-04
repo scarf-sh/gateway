@@ -98,7 +98,7 @@ data ManifestRule
         manifestRuleIncomingPath :: !URLTemplate,
         -- | e.g. @https://github.com/kubernetes/minikube/releases/@
         -- @downloads/minikube-{platform}-{version}.tar.gz@
-        manifestRuleOutgoingURL :: !URLTemplate,
+        manifestRuleOutgoingURL :: !(Maybe URLTemplate),
         -- | Package id this file belongs to
         -- This will be the unique identifier for this file package.
         manifestRulePackageId :: !Text
@@ -114,7 +114,7 @@ data ManifestRule
         manifestRuleIncomingPathRegex :: !Regex,
         -- | e.g. https://github.com/kubernetes/minikube/releases/
         -- downloads/minikube-{platform}-{version}.tar.gz
-        manifestRuleOutgoingURL :: !URLTemplate,
+        manifestRuleOutgoingURL :: !(Maybe URLTemplate),
         -- | Package id this file belongs to
         manifestRulePackageId :: !Text
       }
@@ -336,7 +336,7 @@ manifestRuleToRule manifestRule = case manifestRule of
     newFlatfileRule
       manifestRulePackageId
       (URLTemplate.toText manifestRuleIncomingPath)
-      (URLTemplate.toText manifestRuleOutgoingURL)
+      (URLTemplate.toText <$> manifestRuleOutgoingURL)
   ManifestFileRuleV2 {..} ->
     newFileRuleV2
       manifestRulePackageId
