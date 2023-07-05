@@ -1,0 +1,11 @@
+# multiple variables from multiple query values
+path: "/some-nice-path"
+headers:
+  Host: nicedomain.com
+manifest:
+  rules:
+    - type: file-v1
+      incoming-path: "/some-nice-path"
+      domain: nicedomain.com
+      package-id: a3941b62-12ff-4c39-a263-4342495f4b8b
+      outgoing-url: null
