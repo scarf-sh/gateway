@@ -90,7 +90,7 @@ data FlatfileRule = FlatfileRule
     -- | URL template for the url we redirect to from the public url.
     -- notice the use of the template variables {platform} + {version}
     -- e.g. https://github.com/kubernetes/minikube/releases/downloads/minikube-{platform}-{version}.tar.gzf
-    ruleBackendTemplate :: !URLTemplate
+    ruleBackendTemplate :: !(Maybe URLTemplate)
   }
   deriving (Eq, Show)
 
@@ -110,7 +110,7 @@ data FileRuleV2 = FileRuleV2
     -- | URL template for the url we redirect to from the public url.
     -- notice the use of the template variables {platform} + {version}
     -- e.g. https://github.com/kubernetes/minikube/releases/downloads/minikube-{platform}-{version}.tar.gzf
-    ruleBackendTemplate :: !URLTemplate
+    ruleBackendTemplate :: !(Maybe URLTemplate)
   }
   deriving (Eq, Show)
 
@@ -241,6 +241,9 @@ data RedirectOrProxy
       -- ^ Headers we might want sent back
       !LBS.ByteString
       -- ^ Response body
+  | -- | Respond OK with no data
+    RespondOk
+      !RuleCapture
   | -- | We want to return a 404 for GET /v2/_catalog but if we return
     -- Nothing in the matcher it would attempt to match other rules.
     -- This constructor is used to explicitly return a 404.
@@ -288,18 +291,18 @@ newFlatfileRule ::
   -- | Public URL template
   Text ->
   -- | Backend URL template
-  Text ->
+  Maybe Text ->
   Rule
 newFlatfileRule package public backend =
   let unsafeParseTemplate x = case URLTemplate.fromText x of
         Nothing -> error "Invalid URLTemplate"
         Just t -> t
 
-      backendTemplate = unsafeParseTemplate backend
+      backendTemplate = unsafeParseTemplate <$> backend
    in RuleFlatfile
         FlatfileRule
           { rulePackage = package,
-            ruleExpectedVariables = HashSet.fromList (URLTemplate.variables backendTemplate),
+            ruleExpectedVariables = HashSet.fromList (maybe [] URLTemplate.variables backendTemplate),
             rulePublicTemplate = unsafeParseTemplate public,
             ruleBackendTemplate = backendTemplate
           }
@@ -310,13 +313,13 @@ newFileRuleV2 ::
   -- | Incoming path regex
   Regex.Regex ->
   -- | Backend URL template
-  URLTemplate ->
+  Maybe URLTemplate ->
   Rule
 newFileRuleV2 package incoming backend =
   RuleFileV2
     FileRuleV2
       { rulePackage = package,
-        ruleExpectedVariables = HashSet.fromList (URLTemplate.variables backend),
+        ruleExpectedVariables = HashSet.fromList (maybe [] URLTemplate.variables backend),
         ruleIncomingPathRegex = incoming,
         ruleBackendTemplate = backend
       }
@@ -551,7 +554,8 @@ matchFlatfile ::
 matchFlatfile FlatfileRule {..} request@Request {requestPath, requestQueryString} =
   case URLTemplate.match rulePublicTemplate (requestPath <> requestQueryString) of
     xs@(_ : _)
-      | let extracted = HashMap.fromList xs,
+      | Just ruleBackendTemplate <- ruleBackendTemplate,
+        let extracted = HashMap.fromList xs,
         HashSet.isSubsetOf ruleExpectedVariables (HashMap.keysSet extracted),
         Just !expanded <- URLTemplate.expand (`HashMap.lookup` extracted) ruleBackendTemplate -> do
           let !absoluteUrl = Text.encodeUtf8 expanded
@@ -560,11 +564,24 @@ matchFlatfile FlatfileRule {..} request@Request {requestPath, requestQueryString
                 ( RedirectTo
                     ( FlatfileCapture
                         { filePackage = rulePackage,
-                          fileAbsoluteUrl = absoluteUrl,
+                          fileAbsoluteUrl = Just absoluteUrl,
                           fileVariables = extracted
                         }
                     )
                     (Text.encodeUtf8 expanded)
+                )
+            )
+      | Nothing <- ruleBackendTemplate,
+        let extracted = HashMap.fromList xs ->
+          pure
+            ( Just
+                ( RespondOk
+                    ( FlatfileCapture
+                        { filePackage = rulePackage,
+                          fileAbsoluteUrl = Nothing,
+                          fileVariables = extracted
+                        }
+                    )
                 )
             )
     []
@@ -574,6 +591,7 @@ matchFlatfile FlatfileRule {..} request@Request {requestPath, requestQueryString
       -- TODO would be good to be abe to distinguish no-match from match with
       -- novariables
       | HashSet.null ruleExpectedVariables,
+        Just ruleBackendTemplate <- ruleBackendTemplate,
         Just !ruleBackendExpanded <- URLTemplate.expand (\_ -> Nothing) ruleBackendTemplate,
         Just !rulePublicExpanded <- URLTemplate.expand (\_ -> Nothing) rulePublicTemplate,
         -- check that the publicPathRule matches our request including queryStrings if they are present
@@ -584,11 +602,26 @@ matchFlatfile FlatfileRule {..} request@Request {requestPath, requestQueryString
                 ( RedirectTo
                     ( FlatfileCapture
                         { filePackage = rulePackage,
-                          fileAbsoluteUrl = absoluteUrl,
+                          fileAbsoluteUrl = Just absoluteUrl,
                           fileVariables = HashMap.empty
                         }
                     )
                     absoluteUrl
+                )
+            )
+      | Nothing <- ruleBackendTemplate,
+        Just !rulePublicExpanded <- URLTemplate.expand (\_ -> Nothing) rulePublicTemplate,
+        -- check that the publicPathRule matches our request including queryStrings if they are present
+        pathAndQueryValidation rulePublicExpanded request ->
+          pure
+            ( Just
+                ( RespondOk
+                    ( FlatfileCapture
+                        { filePackage = rulePackage,
+                          fileAbsoluteUrl = Nothing,
+                          fileVariables = HashMap.empty
+                        }
+                    )
                 )
             )
     _ ->
@@ -600,6 +633,7 @@ matchFileRuleV2 FileRuleV2 {..} Request {requestPath} =
     Just xs
       | let extracted = HashMap.fromList xs,
         HashSet.isSubsetOf ruleExpectedVariables (HashMap.keysSet extracted),
+        Just ruleBackendTemplate <- ruleBackendTemplate,
         Just !expanded <- URLTemplate.expand (`HashMap.lookup` extracted) ruleBackendTemplate -> do
           let !absoluteUrl = Text.encodeUtf8 expanded
           pure
@@ -607,7 +641,7 @@ matchFileRuleV2 FileRuleV2 {..} Request {requestPath} =
                 ( RedirectTo
                     ( FlatfileCapture
                         { filePackage = rulePackage,
-                          fileAbsoluteUrl = absoluteUrl,
+                          fileAbsoluteUrl = Just absoluteUrl,
                           fileVariables = extracted
                         }
                     )
@@ -619,6 +653,7 @@ matchFileRuleV2 FileRuleV2 {..} Request {requestPath} =
       -- it's basically a plain old boring redirect and resolves around a
       -- string comparison of the url path.
       | HashSet.null ruleExpectedVariables,
+        Just ruleBackendTemplate <- ruleBackendTemplate,
         Just !ruleBackendExpanded <- URLTemplate.expand (\_ -> Nothing) ruleBackendTemplate -> do
           let !absoluteUrl = Text.encodeUtf8 ruleBackendExpanded
           pure
@@ -626,11 +661,24 @@ matchFileRuleV2 FileRuleV2 {..} Request {requestPath} =
                 ( RedirectTo
                     ( FlatfileCapture
                         { filePackage = rulePackage,
-                          fileAbsoluteUrl = absoluteUrl,
+                          fileAbsoluteUrl = Just absoluteUrl,
                           fileVariables = HashMap.empty
                         }
                     )
                     absoluteUrl
+                )
+            )
+      | Nothing <- ruleBackendTemplate,
+        let extracted = HashMap.fromList xs ->
+          pure
+            ( Just
+                ( RespondOk
+                    ( FlatfileCapture
+                        { filePackage = rulePackage,
+                          fileAbsoluteUrl = Nothing,
+                          fileVariables = extracted
+                        }
+                    )
                 )
             )
       | otherwise ->

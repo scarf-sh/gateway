@@ -156,6 +156,9 @@ gateway tracer GatewayConfig {..} = do
           RespondBytes capture headers bytes ->
             respondBytes tracer span headers bytes request respond
               `finally` gatewayReportRequest span request ok200 (Just capture)
+          RespondOk capture ->
+            respondOk tracer span request respond
+              `finally` gatewayReportRequest span request ok200 (Just capture)
           RespondNotFound capture ->
             notFound request respond
               `finally` gatewayReportRequest span request notFound404 (Just capture)
@@ -252,6 +255,14 @@ respondBytes tracer span ResponseHeaders {..} bytes = \_ respond ->
             <> [("Content-Length", BS.pack (show c)) | Just c <- [contentLength]]
             <> [("Content-Type", contentType)]
     respond $ responseBuilder ok200 headers (lazyByteStringInsert bytes)
+
+respondOk ::
+  Tracer ->
+  ActiveSpan ->
+  Application
+respondOk tracer span = \_ respond ->
+  traced_ tracer (spanOpts "respond-ok" (childOf span)) $ \_ -> do
+    respond $ responseBuilder ok200 mempty mempty
 
 -- Not so great case: We have to proxy through the request. We are deferring
 -- the nitty-gritties to the http-reverse-proxy library. We probably put nginx

@@ -152,14 +152,14 @@ shouldRedirectDockerRequest request
       "docker/"
         `ByteString.isPrefixOf` userAgent
         || "Docker-Client"
-          `ByteString.isInfixOf` userAgent
+        `ByteString.isInfixOf` userAgent
         || "containerd/1.4.9"
-          `ByteString.isInfixOf` userAgent
+        `ByteString.isInfixOf` userAgent
         || "containerd/1.5.5"
-          `ByteString.isInfixOf` userAgent
+        `ByteString.isInfixOf` userAgent
         || "containerd/1.6"
-          `ByteString.isInfixOf` userAgent
+        `ByteString.isInfixOf` userAgent
         || "Watchtower (Docker)"
-          == userAgent
+        == userAgent
   | otherwise =
       False

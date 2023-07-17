@@ -480,7 +480,7 @@ test_gateway_manifest =
         capture
           @?= Just
             ( FlatfileCapture
-                { fileAbsoluteUrl = "https://github.com/aviaviavi/curl-runnings/releases/download/1.0/curl-runnings-1.0-darwin.tar.gz",
+                { fileAbsoluteUrl = Just "https://github.com/aviaviavi/curl-runnings/releases/download/1.0/curl-runnings-1.0-darwin.tar.gz",
                   fileVariables =
                     HashMap.fromList
                       [ ("platform", "darwin"),
@@ -496,7 +496,7 @@ test_gateway_manifest =
         capture
           @?= Just
             ( FlatfileCapture
-                { fileAbsoluteUrl = "https://bucket.s3.aws.amazon.com/something-here/windows/ver1.0.tar.gz",
+                { fileAbsoluteUrl = Just "https://bucket.s3.aws.amazon.com/something-here/windows/ver1.0.tar.gz",
                   fileVariables = HashMap.empty,
                   filePackage = "44d540c0-41f2-469f-98de-50e1a705bd65"
                 }
@@ -508,7 +508,7 @@ test_gateway_manifest =
         capture
           @?= Just
             ( FlatfileCapture
-                { fileAbsoluteUrl = "https://raw.githubusercontent.com/testorg/testctl/master/install.sh",
+                { fileAbsoluteUrl = Just "https://raw.githubusercontent.com/testorg/testctl/master/install.sh",
                   fileVariables = HashMap.empty,
                   filePackage = "aaf2ec15-5244-484b-845a-ffd559e5f802"
                 }
@@ -523,7 +523,7 @@ test_gateway_file_rule =
             [ newFlatfileRule
                 "package-123"
                 "/{package}-{os}-{arch}"
-                "https://some-backend-1/downloads/{package}/{os}/{arch}"
+                (Just "https://some-backend-1/downloads/{package}/{os}/{arch}")
             ]
           )
         ]
@@ -536,7 +536,7 @@ test_gateway_file_rule =
         capture
           @?= Just
             ( FlatfileCapture
-                { fileAbsoluteUrl = "https://some-backend-1/downloads/minikube/linux/amd64",
+                { fileAbsoluteUrl = Just "https://some-backend-1/downloads/minikube/linux/amd64",
                   fileVariables =
                     HashMap.fromList
                       [ ("package", "minikube"),
@@ -566,7 +566,7 @@ test_gateway_file_rule =
         capture
           @?= Just
             ( FlatfileCapture
-                { fileAbsoluteUrl = "https://some-backend-1/downloads/minikube/linux/amd64-hallo",
+                { fileAbsoluteUrl = Just "https://some-backend-1/downloads/minikube/linux/amd64-hallo",
                   fileVariables =
                     HashMap.fromList
                       [ ("package", "minikube"),
@@ -586,7 +586,7 @@ test_gateway_file_rule_2 =
             [ newFlatfileRule
                 "package-123"
                 "/{package}-{version}.{ext}"
-                "https://some-backend-1/downloads/{package}/{version}/{ext}"
+                (Just "https://some-backend-1/downloads/{package}/{version}/{ext}")
             ]
           )
         ]
@@ -599,7 +599,7 @@ test_gateway_file_rule_2 =
         capture
           @?= Just
             ( FlatfileCapture
-                { fileAbsoluteUrl = "https://some-backend-1/downloads/minikube/1/0.tar.gz",
+                { fileAbsoluteUrl = Just "https://some-backend-1/downloads/minikube/1/0.tar.gz",
                   fileVariables =
                     HashMap.fromList
                       [ ("ext", "0.tar.gz"),
@@ -617,7 +617,7 @@ test_gateway_file_rule_2 =
         capture
           @?= Just
             ( FlatfileCapture
-                { fileAbsoluteUrl = "https://some-backend-1/downloads/minikube/1/0.iso",
+                { fileAbsoluteUrl = Just "https://some-backend-1/downloads/minikube/1/0.iso",
                   fileVariables =
                     HashMap.fromList
                       [ ("ext", "0.iso"),

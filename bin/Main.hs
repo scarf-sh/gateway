@@ -113,7 +113,8 @@ logRequest tracer idGen _origin lock span request responseStatus capture =
       addTag span ("response-status", IntT (fromIntegral (fromEnum responseStatus)))
       case capture of
         Just FlatfileCapture {fileAbsoluteUrl, filePackage} -> do
-          addTag span ("file-absolute-url", StringT (Text.decodeUtf8 fileAbsoluteUrl))
+          for_ fileAbsoluteUrl $ \fileAbsoluteUrl ->
+            addTag span ("file-absolute-url", StringT (Text.decodeUtf8 fileAbsoluteUrl))
           addTag span ("file-package", StringT filePackage)
         Just DockerCapture {dockerCaptureImage, dockerCaptureReference, dockerCaptureAutoCreate} -> do
           addTag span ("docker-image", StringT (Text.intercalate "/" dockerCaptureImage))

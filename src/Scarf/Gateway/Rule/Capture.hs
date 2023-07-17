@@ -27,7 +27,7 @@ data RuleCapture
     -- the public url.
     FlatfileCapture
       { -- | Absolute URL we are redirecting to
-        fileAbsoluteUrl :: ByteString,
+        fileAbsoluteUrl :: Maybe ByteString,
         -- | Extracted variables and their values
         fileVariables :: HashMap Text Text,
         -- | The package the rule belongs to
