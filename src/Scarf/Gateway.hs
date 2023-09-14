@@ -311,26 +311,44 @@ proxyTo tracer manager span shouldUseTLS domain = \request respond ->
       respond $
         Wai.responseStream
           (HC.responseStatus response)
-          (fixupResponseHeaders (HC.responseHeaders response))
-          ( \emit flush -> do
-              let reader = HC.responseBody response
-              fix $ \loop -> do
-                bytes <- HC.brRead reader
-                if BS.null bytes
-                  then pure ()
-                  else do
-                    emit (byteStringInsert bytes)
-                    flush
-                    loop
+          ( fixupResponseHeaders
+              (HC.responseStatus response)
+              (HC.responseHeaders response)
+          )
+          ( -- Make sure to only read the response body in case
+            -- the response is not a redirect. We saw the official
+            -- Docker registry respond with a Content-Length header
+            -- on a redirect (with an empty body) which throws off
+            -- http-client.
+            if isRedirect (HC.responseStatus response)
+              then \_emit _flush -> pure ()
+              else \emit flush -> do
+                let reader = HC.responseBody response
+                fix $ \loop -> do
+                  bytes <- HC.brRead reader
+                  if BS.null bytes
+                    then pure ()
+                    else do
+                      emit (byteStringInsert bytes)
+                      flush
+                      loop
           )
   where
-    fixupResponseHeaders headers =
+    isRedirect status =
+      status `elem` [toEnum 302, toEnum 307]
+
+    fixupResponseHeaders status headers =
       [ (name, sanitizedValue)
         | (name, value) <- headers,
           case name of
             "Transfer-Encoding" -> False
             "Accept-Encoding" -> False
             "Content-Encoding" -> False
+            "Content-Length" ->
+              -- The official Docker registry likes to include a Content-Length
+              -- header in a redirect response which throws off http-client as well
+              -- as other tooling like ngrok.
+              not (isRedirect status)
             _ -> True,
           let sanitizedValue =
                 case name of
