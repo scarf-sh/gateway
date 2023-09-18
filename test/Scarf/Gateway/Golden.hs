@@ -36,7 +36,8 @@ import Data.Text.Encoding (decodeUtf8, encodeUtf8)
 import Data.Yaml (decodeFileThrow)
 import Network.Wai
   ( Request
-      ( requestBody,
+      ( rawQueryString,
+        requestBody,
         requestHeaderHost,
         requestHeaderReferer,
         requestHeaderUserAgent,
@@ -93,7 +94,9 @@ data Input = Input
 
 -- | Test output value.
 data Output = Output
-  { -- | Response status code
+  { -- | Query string captured from the request
+    outputQueryString :: Text,
+    -- | Response status code
     outputStatus :: Int,
     -- | Response HTTP headers
     outputHeaders :: [(Text, Text)],
@@ -160,12 +163,14 @@ goldenTests testsDirectory = do
             (newGatewayConfig inputManifest)
               { gatewayReportRequest = \_span request responseStatus capture -> do
                   putMVar chan $
-                    captureRequest
-                      (read "2022-01-11 08:34:00.914835 UTC")
-                      requestId
-                      request
-                      responseStatus
-                      capture
+                    ( request,
+                      captureRequest
+                        (read "2022-01-11 08:34:00.914835 UTC")
+                        requestId
+                        request
+                        responseStatus
+                        capture
+                    )
               }
           headers =
             fmap (bimap (CaseInsensitive.mk . encodeUtf8) encodeUtf8) inputHeaders
@@ -191,7 +196,7 @@ goldenTests testsDirectory = do
                 writeIORef bodyRef ByteString.empty
                 pure result
             }
-      capture <- takeMVar chan
+      (request, capture) <- takeMVar chan
 
       -- We want to have clear and deterministic diffs. For that we have to run the produced
       -- JSON through aeson-pretty.
@@ -201,7 +206,9 @@ goldenTests testsDirectory = do
               decode $
                 encode $
                   Output
-                    { outputStatus =
+                    { outputQueryString =
+                        decodeUtf8 (rawQueryString request),
+                      outputStatus =
                         fromEnum simpleStatus,
                       outputHeaders =
                         fmap (bimap (decodeUtf8 . CaseInsensitive.original) decodeUtf8) simpleHeaders,
@@ -264,3 +271,6 @@ instance ToJSON Output where
               ( stringUtf8 $ show outputCapture
               )
           )
+        <> if outputQueryString /= ""
+          then pair "query" (text outputQueryString)
+          else mempty
