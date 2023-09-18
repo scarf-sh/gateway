@@ -4,6 +4,7 @@
 
 module Scarf.Gateway.URLTemplate
   ( URLTemplate,
+    capturesQuery,
     toText,
     fromText,
     ValidationError (..),
@@ -16,6 +17,7 @@ where
 
 import Burrito qualified
 import Burrito.Internal.Type.Value (Value (String))
+import Control.Applicative ((<|>))
 import Control.Monad.Writer.Strict (execWriter, tell)
 import Data.Aeson (FromJSON (..), ToJSON (..), withText)
 import Data.Foldable (foldl')
@@ -25,13 +27,16 @@ import Data.Text (Text)
 import Data.Text qualified as Text
 import Data.Text.Lazy (toStrict)
 import Data.Text.Lazy.Builder (toLazyTextWith)
-import Network.URI (URI (..), parseURI)
+import Network.URI (URI (..), parseRelativeReference, parseURI)
 
 -- | A type representing an URL Template.
 data URLTemplate = URLTemplate
   { -- Textual representation, this is what the user typed
     -- and what is shown to the user.
     urlTemplateText :: !Text,
+    -- Whether the template captures query parameters. This field is True iff the template
+    -- parses as a relative or absolute URI with a non empty query string.
+    urlTemplateCapturesQuery :: !Bool,
     -- This is the internal representation of a URLTemplate. It might
     -- differ slightly as Burrito might apply optimizations that help
     -- do things quicker.
@@ -60,15 +65,35 @@ instance ToJSON URLTemplate where
 -- | Parses a template from a Text value.
 fromText :: Text -> Maybe URLTemplate
 fromText input = do
-  template <- Burrito.parse (Text.unpack input)
+  template <-
+    Burrito.parse (Text.unpack input)
+  expanded' <-
+    Burrito.expandWith (Just . Just . String) template
+  let expanded =
+        toStrict (toLazyTextWith 256 expanded')
+  -- Good enough heuristic that checks whether the query string is
+  -- non empty and more than "?".
+
+  let parse input =
+        parseURI input <|> parseRelativeReference input
+
+  let capturesQuery
+        | Just URI {uriQuery} <- parse (Text.unpack expanded) =
+            uriQuery /= "" && uriQuery /= "?"
+        | otherwise =
+            False
   pure
     URLTemplate
       { urlTemplateText = input,
+        urlTemplateCapturesQuery = capturesQuery,
         urlTemplate = template
       }
 
 toText :: URLTemplate -> Text
 toText = urlTemplateText
+
+capturesQuery :: URLTemplate -> Bool
+capturesQuery = urlTemplateCapturesQuery
 
 -- | Error as a result of validating the URLTemplate.
 data ValidationError

@@ -551,8 +551,15 @@ matchFlatfile ::
   FlatfileRule ->
   Request ->
   m (Maybe RedirectOrProxy)
-matchFlatfile FlatfileRule {..} request@Request {requestPath, requestQueryString} =
-  case URLTemplate.match rulePublicTemplate (requestPath <> requestQueryString) of
+matchFlatfile FlatfileRule {..} request@Request {requestPath, requestQueryString} = do
+  let -- If the public facing template captures query parameters we include the query string
+      -- in the path to match, else we just check on the path.
+      pathToMatch =
+        if URLTemplate.capturesQuery rulePublicTemplate
+          then requestPath <> requestQueryString
+          else requestPath
+
+  case URLTemplate.match rulePublicTemplate pathToMatch of
     xs@(_ : _)
       | Just ruleBackendTemplate <- ruleBackendTemplate,
         let extracted = HashMap.fromList xs,
@@ -593,9 +600,8 @@ matchFlatfile FlatfileRule {..} request@Request {requestPath, requestQueryString
       | HashSet.null ruleExpectedVariables,
         Just ruleBackendTemplate <- ruleBackendTemplate,
         Just !ruleBackendExpanded <- URLTemplate.expand (\_ -> Nothing) ruleBackendTemplate,
-        Just !rulePublicExpanded <- URLTemplate.expand (\_ -> Nothing) rulePublicTemplate,
         -- check that the publicPathRule matches our request including queryStrings if they are present
-        pathAndQueryValidation rulePublicExpanded request -> do
+        pathAndQueryValidation rulePublicTemplate request -> do
           let !absoluteUrl = Text.encodeUtf8 ruleBackendExpanded
           pure
             ( Just
@@ -610,9 +616,8 @@ matchFlatfile FlatfileRule {..} request@Request {requestPath, requestQueryString
                 )
             )
       | Nothing <- ruleBackendTemplate,
-        Just !rulePublicExpanded <- URLTemplate.expand (\_ -> Nothing) rulePublicTemplate,
         -- check that the publicPathRule matches our request including queryStrings if they are present
-        pathAndQueryValidation rulePublicExpanded request ->
+        pathAndQueryValidation rulePublicTemplate request ->
           pure
             ( Just
                 ( RespondOk
@@ -686,25 +691,24 @@ matchFileRuleV2 FileRuleV2 {..} Request {requestPath} =
     Nothing ->
       pure Nothing
 
-pathAndQueryValidation :: Text -> Request -> Bool
-pathAndQueryValidation rulePublic Request {requestPath, requestQueryString} = do
-  -- parse rulePublic to get access to it's queries and path
-  case parseRelativeReference $ Text.unpack rulePublic of
-    Nothing -> False
-    Just publicUrl -> do
+pathAndQueryValidation :: URLTemplate -> Request -> Bool
+pathAndQueryValidation publicTemplate Request {requestPath, requestQueryString}
+  | Just expandedPublicTemplate <- URLTemplate.expand (\_ -> Nothing) publicTemplate,
+    Just publicUrl <- parseRelativeReference (Text.unpack expandedPublicTemplate) =
       let publicPath = uriPath publicUrl
           publicQuery = uriQuery publicUrl
-      -- check that publicPath is equal to request path
-      if publicPath == requestPath
-        then -- if both public and request don't have queries then public path and request path match so return true
-        case null publicQuery && null requestQueryString of
-          True -> True
-          False -> do
-            -- now check that both queries match
-            let parsedPublic = parseQuery $ BS.pack publicQuery
-                parsedRequest = parseQuery $ BS.pack requestQueryString
-            doQueriesMatch parsedPublic parsedRequest
-        else False
+       in -- check that publicPath is equal to request path
+          publicPath == requestPath
+            && ( -- if the public facing template doesn't capture the query we are cool
+                 not (URLTemplate.capturesQuery publicTemplate)
+                   || ( -- else we have to check if the query parameters are matching
+                        let parsedPublic = parseQuery $ BS.pack publicQuery
+                            parsedRequest = parseQuery $ BS.pack requestQueryString
+                         in doQueriesMatch parsedPublic parsedRequest
+                      )
+               )
+  | otherwise =
+      False
 
 -- convert queries into hashmaps and check that they match
 doQueriesMatch :: Query -> Query -> Bool
