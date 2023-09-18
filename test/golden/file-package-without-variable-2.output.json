@@ -3,5 +3,6 @@
     "headers": {
         "Location": "https://datausa.io/api/data"
     },
+    "query": "?drilldowns=Nation&measures=Population",
     "status": 302
 }
