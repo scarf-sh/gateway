@@ -11,8 +11,6 @@ import Data.Aeson
   ( FromJSON (..),
     ToJSON (..),
     Value (Null),
-    decode,
-    encode,
     object,
     withObject,
     (.!=),
@@ -20,20 +18,17 @@ import Data.Aeson
     (.:?),
     (.=),
   )
-import Data.Aeson.Encode.Pretty (confCompare, defConfig, encodePretty')
-import Data.Aeson.Encoding (dict, int, pair, pairs, text, unsafeToEncoding)
 import Data.Bifunctor (Bifunctor (bimap), first)
 import Data.ByteString qualified as ByteString
-import Data.ByteString.Builder (stringUtf8)
+import Data.ByteString.Lazy qualified
 import Data.CaseInsensitive qualified as CaseInsensitive
 import Data.HashMap.Strict qualified as HashMap
 import Data.IORef (newIORef, readIORef, writeIORef)
 import Data.List (sort)
 import Data.Map.Strict qualified as Map
-import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import Data.Text.Encoding (decodeUtf8, encodeUtf8)
-import Data.Yaml (decodeFileThrow)
+import Data.Yaml (decodeFileThrow, encode)
 import Network.Wai
   ( Request
       ( rawQueryString,
@@ -75,10 +70,11 @@ import Scarf.Gateway.Rule.Capture
   )
 import Scarf.Lib.Tracing (nullTracer)
 import Scarf.Manifest (Manifest, manifestToRules)
-import System.FilePath (replaceExtension)
+import System.FilePath (replaceExtension, takeExtensions)
 import System.IO.Unsafe (unsafeInterleaveIO)
 import Test.Tasty (TestTree)
 import Test.Tasty.Golden (findByExtension, goldenVsStringDiff)
+import Text.Show.Pretty qualified
 
 -- | Input values for Golden tests.
 data Input = Input
@@ -141,7 +137,15 @@ test_gateway_golden = goldenTests "test/golden"
 
 goldenTests :: FilePath -> IO [TestTree]
 goldenTests testsDirectory = do
-  inputFiles <- findByExtension [".yaml"] testsDirectory
+  inputFiles' <- findByExtension [".yaml"] testsDirectory
+
+  -- The glob above also includes the .output.yaml files. Ensure
+  -- we only take the input files.
+  let inputFiles =
+        filter
+          (\file -> takeExtensions file == ".yaml")
+          inputFiles'
+
   when (null inputFiles) $
     error "No golden tests!"
   flip foldMap inputFiles $ \inputFile -> do
@@ -198,24 +202,19 @@ goldenTests testsDirectory = do
             }
       (request, capture) <- takeMVar chan
 
-      -- We want to have clear and deterministic diffs. For that we have to run the produced
-      -- JSON through aeson-pretty.
-      let json :: Value
-          json =
-            fromMaybe (error "impossible") $
-              decode $
-                encode $
-                  Output
-                    { outputQueryString =
-                        decodeUtf8 (rawQueryString request),
-                      outputStatus =
-                        fromEnum simpleStatus,
-                      outputHeaders =
-                        fmap (bimap (decodeUtf8 . CaseInsensitive.original) decodeUtf8) simpleHeaders,
-                      outputCapture =
-                        capture
-                    }
-      pure (encodePretty' (defConfig {confCompare = compare}) json, simpleBody)
+      let output =
+            Output
+              { outputQueryString =
+                  decodeUtf8 (rawQueryString request),
+                outputStatus =
+                  fromEnum simpleStatus,
+                outputHeaders =
+                  fmap (bimap (decodeUtf8 . CaseInsensitive.original) decodeUtf8) simpleHeaders,
+                outputCapture =
+                  capture
+              }
+
+      pure (Data.ByteString.Lazy.fromStrict (Data.Yaml.encode output), simpleBody)
 
     let compareFiles = \ref new -> ["diff", "-u", ref, new]
 
@@ -223,7 +222,7 @@ goldenTests testsDirectory = do
       [ goldenVsStringDiff
           inputFile
           compareFiles
-          (replaceExtension inputFile "output.json")
+          (replaceExtension inputFile "output.yaml")
           (pure (fst testResult)),
         goldenVsStringDiff
           (inputFile <> " body")
@@ -256,21 +255,12 @@ instance FromJSON Input where
       <*> o .: "manifest"
 
 instance ToJSON Output where
-  toJSON =
-    error "Unimplemented due to CapturedRequest not having a ToJSON instance for performance reasons"
-
-  toEncoding Output {..} =
-    pairs $
-      pair "status" (int outputStatus)
-        <> pair
-          "headers"
-          (dict text text Map.foldrWithKey (Map.fromList outputHeaders))
-        <> pair
-          "capture"
-          ( unsafeToEncoding
-              ( stringUtf8 $ show outputCapture
-              )
-          )
-        <> if outputQueryString /= ""
-          then pair "query" (text outputQueryString)
-          else mempty
+  toJSON Output {..} =
+    object $
+      [ "status" .= outputStatus,
+        "headers" .= Map.fromList outputHeaders,
+        "capture" .= Text.Show.Pretty.ppShow outputCapture
+      ]
+        <> [ "query" .= outputQueryString
+             | outputQueryString /= ""
+           ]

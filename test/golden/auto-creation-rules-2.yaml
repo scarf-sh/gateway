@@ -1,0 +1,15 @@
+path: /v2/library/hello-world/manifests/latest
+headers: 
+  Host: cr.test.io
+manifest:
+  rules:
+    - type:  docker-v1
+      repository-name: library/hello-world
+      domain: cr.test.io
+      registry: ghcr.io
+      package-id: "8717953c-3452-4ef7-9a14-b64dc19163b4"
+    - type:  docker-v2
+      domain: cr.test.io
+      registry: ghcr.io
+      rule-id: rule-123
+      pattern: "library/hello-world"

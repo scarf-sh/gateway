@@ -1,9 +1,0 @@
-{
-    "capture": "PythonCapture {pythonCapturePackage = Just \"123\", pythonCaptureVersion = Nothing, pythonCaptureFileName = Nothing, pythonCaptureFileBackendURL = Nothing}",
-    "headers": {
-        "Content-Length": "351",
-        "Content-Type": "text/html",
-        "Etag": "\"poRjCQOfzSLEnMunwDeaf9iLsReZf61anTfTPU2nUEg=\""
-    },
-    "status": 200
-}

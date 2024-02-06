@@ -237,10 +237,10 @@ data RedirectOrProxy
   | -- | Respond with bytes directly.
     RespondBytes
       !RuleCapture
+      -- | Headers we might want sent back
       !ResponseHeaders
-      -- ^ Headers we might want sent back
+      -- | Response body
       !LBS.ByteString
-      -- ^ Response body
   | -- | Respond OK with no data
     RespondOk
       !RuleCapture

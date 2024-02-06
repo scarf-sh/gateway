@@ -14,7 +14,6 @@ import Data.Aeson (Value)
 import Data.ByteString (ByteString)
 import Data.HashMap.Strict (HashMap)
 import Data.Text (Text)
-import Data.Text qualified as Text
 import Data.Time (UTCTime)
 import Data.UUID (UUID)
 import Data.UUID.V4 qualified as UUID
@@ -78,7 +77,7 @@ newRequestId = RequestId <$> UUID.nextRandom
 -- scarf-server.
 --
 -- TODO Switch to e.g. thrift encoding using Schema
-newtype CapturedRequest = CapturedRequest Text
+newtype CapturedRequest = CapturedRequest (Maybe RuleCapture)
   deriving newtype (Show)
 
 -- | Captures all the relevant information for further processing.
@@ -102,4 +101,4 @@ captureRequest ::
   Maybe RuleCapture ->
   CapturedRequest
 captureRequest _time _requestId _request _responseStatus mcapture =
-  CapturedRequest $ Text.pack $ maybe "" show mcapture
+  CapturedRequest $ mcapture

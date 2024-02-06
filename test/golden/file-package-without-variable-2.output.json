@@ -1,8 +1,0 @@
-{
-    "capture": "FlatfileCapture {fileAbsoluteUrl = Just \"https://datausa.io/api/data\", fileVariables = fromList [(\"x\",\"xxx\")], filePackage = \"a1b331fa-1539-49e5-bdc4-dc8a48e586d1\"}",
-    "headers": {
-        "Location": "https://datausa.io/api/data"
-    },
-    "query": "?drilldowns=Nation&measures=Population",
-    "status": 302
-}

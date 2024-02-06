@@ -183,7 +183,8 @@ withRootTracer manager msamplingRate action = do
           not (null pushEndpoint) = do
             let options =
                   zipkinOptions manager endpoint
-                    & zoEndpoint .~ pushEndpoint
+                    & zoEndpoint
+                    .~ pushEndpoint
 
                 close zipkin =
                   closeZipkin zipkin `catch` \(_ :: BlockedIndefinitelyOnSTM) ->
@@ -207,7 +208,8 @@ withRootTracer manager msamplingRate action = do
           Just port <- readMaybe (unpack port') = do
             let options =
                   jaegerAgentOptions serviceName
-                    & jaoAddr .~ UDPAddr (unpack hostname) port
+                    & jaoAddr
+                    .~ UDPAddr (unpack hostname) port
             withJaegerAgent options $ \agent -> do
               let batchOpts =
                     batchOptions (traverse_ (jaegerAgentReporter agent))

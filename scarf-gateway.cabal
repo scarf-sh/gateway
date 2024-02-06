@@ -207,6 +207,7 @@ test-suite scarf-gateway-test
     , internal
     , manifest
     , network-uri
+    , pretty-show
     , scarf-gateway
     , tasty
     , tasty-golden

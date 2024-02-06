@@ -1,7 +1,0 @@
-{
-    "capture": "PythonCapture {pythonCapturePackage = Just \"123\", pythonCaptureVersion = Just \"1.3.0\", pythonCaptureFileName = Just \"numpy-1.3.0.tar.gz\", pythonCaptureFileBackendURL = Just \"https://files.pythonhosted.org/packages/ab/67/19e93e3f8c3e077dcf6fc54e84e1cff609c4a7e0a3ce14f70794dde60063/numpy-1.3.0.tar.gz#sha256=7524687cce85aa78103046db5e617c626b0ef871a203a049159f88f35647c90d\"}",
-    "headers": {
-        "Location": "https://files.pythonhosted.org/packages/ab/67/19e93e3f8c3e077dcf6fc54e84e1cff609c4a7e0a3ce14f70794dde60063/numpy-1.3.0.tar.gz#sha256=7524687cce85aa78103046db5e617c626b0ef871a203a049159f88f35647c90d"
-    },
-    "status": 302
-}
