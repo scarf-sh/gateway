@@ -30,8 +30,7 @@ module Scarf.Gateway.Rule
 where
 
 import Crypto.Hash.SHA256 (hashlazy)
-import Data.Aeson.Parser qualified as Aeson
-import Data.Attoparsec.ByteString qualified as Attoparsec
+import Data.Aeson qualified
 import Data.ByteString (ByteString)
 import Data.ByteString.Base64.URL (encode)
 import Data.ByteString.Builder (Builder, char7, string7, toLazyByteString)
@@ -47,8 +46,7 @@ import Data.Text.Encoding qualified as Text
 import Network.HTTP.Types.URI (Query, parseQuery, parseQueryText)
 import Network.URI (URI (..), parseRelativeReference)
 import Network.Wai
-  ( getRequestBodyChunk,
-    pathInfo,
+  ( pathInfo,
     rawQueryString,
     requestMethod,
   )
@@ -875,8 +873,8 @@ matchScarfJsPackageEvent ::
   m (Maybe RedirectOrProxy)
 matchScarfJsPackageEvent Request {requestWai = request}
   | "package-event" : "install" : rest <- pathInfo request = do
-      body <- parseBody
-      case body of
+      body <- Wai.lazyRequestBody request
+      case Data.Aeson.decode' body of
         Nothing ->
           pure (Just RespondInvalidRequest)
         Just _value
@@ -906,7 +904,3 @@ matchScarfJsPackageEvent Request {requestWai = request}
                 )
   | otherwise =
       pure Nothing
-  where
-    parseBody = do
-      result <- Attoparsec.parseWith (getRequestBodyChunk request) Aeson.value' mempty
-      pure (Attoparsec.maybeResult result)

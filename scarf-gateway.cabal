@@ -100,7 +100,6 @@ library
     , aeson
     , aeson-pretty
     , async
-    , attoparsec
     , base
     , base64-bytestring
     , burrito
