@@ -36,6 +36,7 @@ import Data.ByteString.Base64.URL (encode)
 import Data.ByteString.Builder (Builder, char7, string7, toLazyByteString)
 import Data.ByteString.Char8 qualified as BS
 import Data.ByteString.Lazy qualified as LBS
+import Data.Containers.ListUtils (nubOrdOn)
 import Data.HashMap.Strict (HashMap)
 import Data.HashMap.Strict qualified as HashMap
 import Data.HashSet (HashSet)
@@ -665,7 +666,7 @@ rewriteQueryString redirectTarget request
           -- times -- after all, query strings may contain more than one occurrence of
           -- a variable.
           combinedQuery =
-            redirectTargetQuery <> requestQuery
+            nubOrdOn fst (redirectTargetQuery <> requestQuery)
 
           renderedQuery =
             Text.decodeUtf8

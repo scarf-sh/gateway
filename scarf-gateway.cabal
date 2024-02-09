@@ -106,6 +106,7 @@ library
     , bytestring
     , case-insensitive
     , conduit
+    , containers
     , cryptohash-sha256
     , exceptions
     , hashable
