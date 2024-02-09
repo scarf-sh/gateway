@@ -3,13 +3,13 @@ capture: |-
     FlatfileCapture
       { fileAbsoluteUrl =
           Just
-            "https://datausa.io/api/data?drilldowns=Nation&measures=Population"
+            "https://datausa.io/api/data?drilldowns=Nation&measures=Population&measures=Population"
       , fileVariables =
           fromList
             [ ( "drilldowns" , "Nation" ) , ( "measures" , "Population" ) ]
       , filePackage = "a1b331fa-1539-49e5-bdc4-dc8a48e586d1"
       }
 headers:
-  Location: https://datausa.io/api/data?drilldowns=Nation&measures=Population
+  Location: https://datausa.io/api/data?drilldowns=Nation&measures=Population&measures=Population
 query: ?measures=Population
 status: 302
