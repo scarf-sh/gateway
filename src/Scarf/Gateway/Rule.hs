@@ -43,8 +43,8 @@ import Data.HashSet qualified as HashSet
 import Data.Text (Text)
 import Data.Text qualified as Text
 import Data.Text.Encoding qualified as Text
-import Network.HTTP.Types.URI (Query, parseQuery, parseQueryText)
-import Network.URI (URI (..), parseRelativeReference)
+import Network.HTTP.Types.URI (Query, parseQuery, parseQueryText, renderQuery)
+import Network.URI (URI (..), parseRelativeReference, parseURI)
 import Network.Wai
   ( pathInfo,
     rawQueryString,
@@ -549,7 +549,7 @@ matchFlatfile ::
   FlatfileRule ->
   Request ->
   m (Maybe RedirectOrProxy)
-matchFlatfile FlatfileRule {..} request@Request {requestPath, requestQueryString} = do
+matchFlatfile FlatfileRule {..} request@Request {requestWai, requestPath, requestQueryString} = do
   let -- If the public facing template captures query parameters we include the query string
       -- in the path to match, else we just check on the path.
       pathToMatch =
@@ -563,7 +563,8 @@ matchFlatfile FlatfileRule {..} request@Request {requestPath, requestQueryString
         let extracted = HashMap.fromList xs,
         HashSet.isSubsetOf ruleExpectedVariables (HashMap.keysSet extracted),
         Just !expanded <- URLTemplate.expand (`HashMap.lookup` extracted) ruleBackendTemplate -> do
-          let !absoluteUrl = Text.encodeUtf8 expanded
+          -- Rewrite the query string, if necessary
+          let !absoluteUrl = rewriteQueryString expanded requestWai
           pure
             ( Just
                 ( RedirectTo
@@ -573,7 +574,7 @@ matchFlatfile FlatfileRule {..} request@Request {requestPath, requestQueryString
                           fileVariables = extracted
                         }
                     )
-                    (Text.encodeUtf8 expanded)
+                    absoluteUrl
                 )
             )
       | Nothing <- ruleBackendTemplate,
@@ -600,7 +601,8 @@ matchFlatfile FlatfileRule {..} request@Request {requestPath, requestQueryString
         Just !ruleBackendExpanded <- URLTemplate.expand (\_ -> Nothing) ruleBackendTemplate,
         -- check that the publicPathRule matches our request including queryStrings if they are present
         pathAndQueryValidation rulePublicTemplate request -> do
-          let !absoluteUrl = Text.encodeUtf8 ruleBackendExpanded
+          -- Rewrite the query string, if necessary
+          let !absoluteUrl = rewriteQueryString ruleBackendExpanded requestWai
           pure
             ( Just
                 ( RedirectTo
@@ -630,15 +632,65 @@ matchFlatfile FlatfileRule {..} request@Request {requestPath, requestQueryString
     _ ->
       pure Nothing
 
+-- | It's a requirement to forward all query parameters to the redirect location.
+-- This function merges the query strings from the incoming request and the rendered
+-- redirect location.
+rewriteQueryString ::
+  -- | Absolute URL to redirect to
+  Text ->
+  -- | Incoming request
+  Wai.Request ->
+  ByteString
+rewriteQueryString redirectTarget request
+  -- Fast path: In case there are no query parameters on the request
+  -- there is no need for rewriting.
+  | [] <- Wai.queryString request =
+      Text.encodeUtf8 redirectTarget
+  -- Parse the redirect target as a URI to extract, combine and replace
+  -- the query part of it.
+  -- TODO: there are an aweful lot of string conversions going on,
+  -- maybe there's a more direct way.
+  | Just uri@URI {uriQuery} <- parseURI (Text.unpack redirectTarget) =
+      let redirectTargetQuery =
+            parseQuery (Text.encodeUtf8 (Text.pack uriQuery))
+
+          requestQuery =
+            Wai.queryString request
+
+          -- This is tricky: In case the redirect target already has query
+          -- parameters there is a chance that when combining the queries that
+          -- we have duplicate query parameters. Duplicates means they will
+          -- be counted twice in our main application. But if we nub them, we might
+          -- lose duplicate query parametes that were expected to occurr multiple
+          -- times -- after all, query strings may contain more than one occurrence of
+          -- a variable.
+          combinedQuery =
+            redirectTargetQuery <> requestQuery
+
+          renderedQuery =
+            Text.decodeUtf8
+              ( renderQuery
+                  True -- add a leading '?'
+                  combinedQuery
+              )
+       in Text.encodeUtf8 $
+            Text.pack $
+              show (uri {uriQuery = Text.unpack renderedQuery})
+  -- In case the redirectTarget didn't parse as a URI we are not doing anything
+  -- and ideally shouldn't happen.
+  | otherwise =
+      Text.encodeUtf8 redirectTarget
+
 matchFileRuleV2 :: (MonadMatch m) => FileRuleV2 -> Request -> m (Maybe RedirectOrProxy)
-matchFileRuleV2 FileRuleV2 {..} Request {requestPath} =
+matchFileRuleV2 FileRuleV2 {..} Request {requestWai, requestPath} =
   case Regex.match ruleIncomingPathRegex requestPath of
     Just xs
       | let extracted = HashMap.fromList xs,
         HashSet.isSubsetOf ruleExpectedVariables (HashMap.keysSet extracted),
         Just ruleBackendTemplate <- ruleBackendTemplate,
         Just !expanded <- URLTemplate.expand (`HashMap.lookup` extracted) ruleBackendTemplate -> do
-          let !absoluteUrl = Text.encodeUtf8 expanded
+          -- Rewrite the query string, if necessary
+          let !absoluteUrl = rewriteQueryString expanded requestWai
           pure
             ( Just
                 ( RedirectTo
@@ -648,7 +700,7 @@ matchFileRuleV2 FileRuleV2 {..} Request {requestPath} =
                           fileVariables = extracted
                         }
                     )
-                    (Text.encodeUtf8 expanded)
+                    absoluteUrl
                 )
             )
 
@@ -658,7 +710,8 @@ matchFileRuleV2 FileRuleV2 {..} Request {requestPath} =
       | HashSet.null ruleExpectedVariables,
         Just ruleBackendTemplate <- ruleBackendTemplate,
         Just !ruleBackendExpanded <- URLTemplate.expand (\_ -> Nothing) ruleBackendTemplate -> do
-          let !absoluteUrl = Text.encodeUtf8 ruleBackendExpanded
+          -- Rewrite the query string, if necessary
+          let !absoluteUrl = rewriteQueryString ruleBackendExpanded requestWai
           pure
             ( Just
                 ( RedirectTo
