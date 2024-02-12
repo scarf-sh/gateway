@@ -45,7 +45,7 @@ import Data.Text (Text)
 import Data.Text qualified as Text
 import Data.Text.Encoding qualified as Text
 import Network.HTTP.Types.URI (Query, parseQuery, parseQueryText, renderQuery)
-import Network.URI (URI (..), parseRelativeReference, parseURI)
+import Network.URI (URI (..), escapeURIString, isUnreserved, parseRelativeReference, parseURI)
 import Network.Wai
   ( pathInfo,
     rawQueryString,
@@ -643,15 +643,11 @@ rewriteQueryString ::
   Wai.Request ->
   ByteString
 rewriteQueryString redirectTarget request
-  -- Fast path: In case there are no query parameters on the request
-  -- there is no need for rewriting.
-  | [] <- Wai.queryString request =
-      Text.encodeUtf8 redirectTarget
   -- Parse the redirect target as a URI to extract, combine and replace
   -- the query part of it.
   -- TODO: there are an aweful lot of string conversions going on,
   -- maybe there's a more direct way.
-  | Just uri@URI {uriQuery} <- parseURI (Text.unpack redirectTarget) =
+  | Just uri@URI {uriQuery, uriPath} <- parseURI (Text.unpack redirectTarget) =
       let redirectTargetQuery =
             parseQuery (Text.encodeUtf8 (Text.pack uriQuery))
 
@@ -676,7 +672,18 @@ rewriteQueryString redirectTarget request
               )
        in Text.encodeUtf8 $
             Text.pack $
-              show (uri {uriQuery = Text.unpack renderedQuery})
+              show
+                ( uri
+                    { uriQuery =
+                        Text.unpack renderedQuery,
+                      uriPath =
+                        -- We go over the URI path to escape anything that is worth escaping.
+                        -- Unfortunately rendering the URI doesn't do any escaping automatically.
+                        escapeURIString
+                          (\c -> c == '/' || isUnreserved c)
+                          uriPath
+                    }
+                )
   -- In case the redirectTarget didn't parse as a URI we are not doing anything
   -- and ideally shouldn't happen.
   | otherwise =
