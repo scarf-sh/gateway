@@ -1,0 +1,10 @@
+capture: |-
+  Just
+    FlatfileCapture
+      { fileAbsoluteUrl = Just "http://downloads.test.sh/hello%20world"
+      , fileVariables = fromList []
+      , filePackage = "8717953c-3452-4ef7-9a14-b64dc19163b4"
+      }
+headers:
+  Location: http://downloads.test.sh/hello%20world
+status: 302

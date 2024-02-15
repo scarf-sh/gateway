@@ -17,6 +17,7 @@ module Scarf.Gateway.Rule
     newPixelRule,
     newScarfJsRule,
     newPythonRule,
+    newCatchAllRule,
     optimizeRules,
     RedirectOrProxy (..),
     ResponseHeaders (..),
@@ -44,7 +45,14 @@ import Data.HashSet qualified as HashSet
 import Data.Text (Text)
 import Data.Text qualified as Text
 import Data.Text.Encoding qualified as Text
-import Network.HTTP.Types.URI (Query, parseQuery, parseQueryText, renderQuery)
+import Network.HTTP.Types.URI
+  ( Query,
+    parseQuery,
+    parseQueryText,
+    renderQuery,
+    renderQueryBuilder,
+    urlEncodeBuilder,
+  )
 import Network.URI (URI (..), parseRelativeReference, parseURI)
 import Network.Wai
   ( pathInfo,
@@ -116,6 +124,20 @@ data FileRuleV2 = FileRuleV2
 instance Ord FileRuleV2 where
   a `compare` b = ruleIncomingPathRegex a `compare` ruleIncomingPathRegex b
 
+data CatchAllRuleV1 = CatchAllRuleV1
+  { -- | Package this rule belongs to.
+    rulePackage :: Text,
+    -- | Domain to redirect to. The request path and query string
+    -- will of the incoming request will be passed to this domain.
+    -- If not present, the Gateway returns a 200 instead of a
+    -- redirect via 302.
+    ruleRedirectTargetDomain :: Maybe Text
+  }
+  deriving (Eq, Show)
+
+instance Ord CatchAllRuleV1 where
+  a `compare` b = ruleRedirectTargetDomain a `compare` ruleRedirectTargetDomain b
+
 -- | Matching Scarf's documentation pixels. We don't validate the pixel-id
 -- at request time. Just log the access and carry on.
 data PixelRule = PixelRule
@@ -182,6 +204,7 @@ data Rule
   | RulePixel PixelRule
   | RulePythonV1 PythonRuleV1
   | RuleScarfJs
+  | RuleCatchAllV1 CatchAllRuleV1
   deriving (Show, Eq)
 
 instance Ord Rule where
@@ -215,6 +238,8 @@ instance Ord Rule where
     (RuleScarfJs, RuleScarfJs) -> EQ
     (RuleScarfJs, _) -> LT
     (_, RuleScarfJs) -> GT
+    (RuleCatchAllV1 {}, _) -> GT
+    (_, RuleCatchAllV1 {}) -> LT
 
 data ResponseHeaders = ResponseHeaders
   { contentType :: ByteString,
@@ -321,6 +346,19 @@ newFileRuleV2 package incoming backend =
         ruleExpectedVariables = HashSet.fromList (maybe [] URLTemplate.variables backend),
         ruleIncomingPathRegex = incoming,
         ruleBackendTemplate = backend
+      }
+
+newCatchAllRule ::
+  -- | Package identifier
+  Text ->
+  -- | Redirect target domain, if any
+  Maybe Text ->
+  Rule
+newCatchAllRule package redirectTargetDomain =
+  RuleCatchAllV1
+    CatchAllRuleV1
+      { rulePackage = package,
+        ruleRedirectTargetDomain = redirectTargetDomain
       }
 
 newPixelRule ::
@@ -537,6 +575,8 @@ matchRule rule request = case rule of
     matchPython pythonRule request
   RuleScarfJs ->
     matchScarfJsPackageEvent request
+  RuleCatchAllV1 rule ->
+    matchCatchAllV1 rule request
   where
     responseBuilder =
       Scarf.Gateway.Rule.Response.ResponseBuilder
@@ -805,6 +845,67 @@ matchPixel PixelRule {..} Request {requestWai}
           )
   | otherwise =
       pure Nothing
+
+-- | Match a catch-all rule. In its current form the only thing it does is redirect a request 
+-- to separate domain. Something that, in the past, has been done using file rules and catch-all
+-- patterns like /{+path}. While effective URI templates are not great at dealing with encoding
+-- specifics.
+matchCatchAllV1 ::
+  (MonadMatch m) =>
+  CatchAllRuleV1 ->
+  Request ->
+  m (Maybe RedirectOrProxy)
+matchCatchAllV1 CatchAllRuleV1 {..} Request {requestWai}
+  | Just targetDomain <- ruleRedirectTargetDomain = do
+      -- Construct the absolute URL to redirect to.
+      let !absoluteUrl =
+            LBS.toStrict $
+              toLazyByteString $
+                -- Just using the protocol that the request came in with 
+                -- allows for convenient testing.
+                (if Wai.isSecure requestWai then "https://" else "http://")
+                  <> Text.encodeUtf8Builder targetDomain
+                  <> (
+                       -- We would just like to use encodePath which is provided by http-types
+                       -- but that doesn't apply all the escaping out of the box. Instead, we
+                       -- are essentially inlining its implementation here with the necessary
+                       -- adjustment.
+                       let encodedSegments =
+                             foldr
+                               (\x -> ((char7 '/' <> urlEncodeBuilder True (Text.encodeUtf8 x)) <>))
+                               mempty
+                               (Wai.pathInfo requestWai)
+                        in case Wai.queryString requestWai of
+                             [] ->
+                               encodedSegments
+                             query ->
+                               encodedSegments <> renderQueryBuilder True query
+                     )
+      pure
+        ( Just
+            ( RedirectTo
+                ( FlatfileCapture
+                    { filePackage = rulePackage,
+                      fileAbsoluteUrl = Just absoluteUrl,
+                      fileVariables = mempty
+                    }
+                )
+                absoluteUrl
+            )
+        )
+  | otherwise =
+      -- No target domain, just capture the request.
+      pure
+        ( Just
+            ( RespondOk
+                ( FlatfileCapture
+                    { filePackage = rulePackage,
+                      fileAbsoluteUrl = Nothing,
+                      fileVariables = mempty
+                    }
+                )
+            )
+        )
 
 -- | Etag matching for caching of Python Simple index. This allows clients (e.g. pip) to
 -- avoid downloading the whole index again.

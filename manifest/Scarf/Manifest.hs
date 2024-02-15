@@ -35,6 +35,7 @@ import Scarf.Gateway.ImagePattern qualified as ImagePattern
 import Scarf.Gateway.Regex (Regex)
 import Scarf.Gateway.Rule
   ( Rule,
+    newCatchAllRule,
     newDockerRuleV1,
     newDockerRuleV2,
     newFileRuleV2,
@@ -144,6 +145,18 @@ data ManifestRule
         -- | Manifest backend index. If not present, assume https://pypi.org/simple/
         manifestRuleBackendSimpleIndex :: !(Maybe Text)
       }
+  | ManifestRuleCatchAllV1
+      { -- | Package name
+        manifestRulePackageName :: !Text,
+        -- | Owner of the package
+        manifestRuleOwner :: !Text,
+        -- | e.g. cr.l5d.io
+        manifestRuleDomain :: !Domain,
+        -- | Package id this file belongs to
+        manifestRulePackageId :: !Text,
+        -- | Target domain to redirect to
+        manifestRuleRedirectTargetDomain :: !(Maybe Text)
+      }
   deriving (Eq, Show)
 
 data PythonFileHashV1 = PythonFileHashV1
@@ -227,6 +240,13 @@ instance FromJSON ManifestRule where
           <*> o .: "backend-url"
           <*> o .: "package-id"
           <*> o .:? "backend-simple-index-url"
+      "catch-all-v1" ->
+        ManifestRuleCatchAllV1
+          <$> o .:? "package-name" .!= ""
+          <*> o .:? "owner" .!= ""
+          <*> o .: "domain"
+          <*> o .: "package-id"
+          <*> o .:? "redirect-target-domain"
       _ ->
         fail "invalid manifest rule type"
 
@@ -289,6 +309,16 @@ instance ToJSON ManifestRule where
           "backend-url" .= manifestRuleBackendURL,
           "package-id" .= manifestRulePackageId,
           "backend-simple-index-url" .= manifestRuleBackendSimpleIndex
+        ]
+  toJSON ManifestRuleCatchAllV1 {..} =
+    object $
+      dropNull
+        [ "type" .= ("catch-all-v1" :: Text),
+          "package-name" .= manifestRulePackageName,
+          "owner" .= manifestRuleOwner,
+          "domain" .= manifestRuleDomain,
+          "package-id" .= manifestRulePackageId,
+          "redirect-target-domain" .= manifestRuleRedirectTargetDomain
         ]
 
 dropNull :: [(a, Value)] -> [(a, Value)]
@@ -357,3 +387,7 @@ manifestRuleToRule manifestRule = case manifestRule of
       manifestRuleRequiresPython
       manifestRuleBackendURL
       manifestRulePackageId
+  ManifestRuleCatchAllV1 {..} ->
+    newCatchAllRule
+      manifestRulePackageId
+      manifestRuleRedirectTargetDomain
