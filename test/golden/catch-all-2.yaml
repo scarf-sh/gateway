@@ -1,0 +1,9 @@
+path: /search?q=hello%20world
+headers: 
+  Host: downloads.test.io
+manifest:
+  rules:
+    - type:  catch-all-v1
+      domain: downloads.test.io
+      redirect-target-domain: downloads.test.sh
+      package-id: "8717953c-3452-4ef7-9a14-b64dc19163b4"
