@@ -846,7 +846,7 @@ matchPixel PixelRule {..} Request {requestWai}
   | otherwise =
       pure Nothing
 
--- | Match a catch-all rule. In its current form the only thing it does is redirect a request 
+-- | Match a catch-all rule. In its current form the only thing it does is redirect a request
 -- to separate domain. Something that, in the past, has been done using file rules and catch-all
 -- patterns like /{+path}. While effective URI templates are not great at dealing with encoding
 -- specifics.
@@ -861,9 +861,7 @@ matchCatchAllV1 CatchAllRuleV1 {..} Request {requestWai}
       let !absoluteUrl =
             LBS.toStrict $
               toLazyByteString $
-                -- Just using the protocol that the request came in with 
-                -- allows for convenient testing.
-                (if Wai.isSecure requestWai then "https://" else "http://")
+                "https://"
                   <> Text.encodeUtf8Builder targetDomain
                   <> (
                        -- We would just like to use encodePath which is provided by http-types
