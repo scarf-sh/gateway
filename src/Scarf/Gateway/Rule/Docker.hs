@@ -30,7 +30,9 @@ data DockerRuleV1 = DockerRuleV1
     -- respective package ids.
     ruleImages :: !(HashMap [Text] Text),
     -- | Domain of the registry to redirect (or proxy) to.
-    ruleBackendRegistry :: !ByteString
+    ruleBackendRegistry :: !ByteString,
+    -- | Flag indicating whether to always proxy and never redirect.
+    ruleAlwaysProxy :: !Bool
   }
   deriving (Eq, Show)
 
@@ -41,7 +43,9 @@ data DockerRuleV2 = DockerRuleV2
     -- | Id of the rule in the backend.
     ruleRuleId :: !Text,
     -- | Domain of the registry to redirect (or proxy) to.
-    ruleBackendRegistry :: !ByteString
+    ruleBackendRegistry :: !ByteString,
+    -- | Flag indicating whether to always proxy and never redirect.
+    ruleAlwaysProxy :: !Bool
   }
   deriving (Eq, Show)
 
@@ -62,7 +66,7 @@ shouldAlwaysProxy domain =
 type DockerImageMatcher = [Text] -> Maybe (Either Text Text)
 
 matchDockerRuleV1 :: (MonadMatch m) => DockerRuleV1 -> Request -> ResponseBuilder response -> m (Maybe response)
-matchDockerRuleV1 DockerRuleV1 {ruleImages, ruleBackendRegistry} =
+matchDockerRuleV1 DockerRuleV1 {ruleImages, ruleBackendRegistry, ruleAlwaysProxy} =
   matchDocker
     ( \image ->
         case HashMap.lookup image ruleImages of
@@ -70,9 +74,10 @@ matchDockerRuleV1 DockerRuleV1 {ruleImages, ruleBackendRegistry} =
           Nothing -> Nothing
     )
     ruleBackendRegistry
+    ruleAlwaysProxy
 
 matchDockerRuleV2 :: (MonadMatch m) => DockerRuleV2 -> Request -> ResponseBuilder response -> m (Maybe response)
-matchDockerRuleV2 DockerRuleV2 {ruleImagePattern, ruleRuleId, ruleBackendRegistry} =
+matchDockerRuleV2 DockerRuleV2 {ruleImagePattern, ruleRuleId, ruleBackendRegistry, ruleAlwaysProxy} =
   matchDocker
     ( \image ->
         if ImagePattern.match ruleImagePattern image
@@ -80,6 +85,7 @@ matchDockerRuleV2 DockerRuleV2 {ruleImagePattern, ruleRuleId, ruleBackendRegistr
           else Nothing
     )
     ruleBackendRegistry
+    ruleAlwaysProxy
 
 type MonadMatch m = m ~ IO
 
@@ -95,14 +101,16 @@ matchDocker ::
   DockerImageMatcher ->
   -- | Backend registry
   ByteString ->
+  -- | Flag indicating whether to always proxy and never redirect.
+  Bool ->
   Request ->
   ResponseBuilder response ->
   m (Maybe response)
-matchDocker matchImage backendRegistry Request {requestWai = request} responseBuilder@ResponseBuilder {..}
+matchDocker matchImage backendRegistry alwaysProxy Request {requestWai = request} responseBuilder@ResponseBuilder {..}
   | "/v2/_catalog" <- Wai.rawPathInfo request =
       pure $ Just (notFound emptyCapture)
   | "/v2/" <- Wai.rawPathInfo request =
-      pure $ Just $ redirectOrProxy request backendRegistry emptyCapture responseBuilder
+      pure $ Just $ redirectOrProxy request backendRegistry alwaysProxy emptyCapture responseBuilder
   | ("v2" : image, _manifestsOrBlobsOrTags : reference : _) <-
       break
         (\x -> x == "manifests" || x == "blobs" || x == "tags")
@@ -116,7 +124,7 @@ matchDocker matchImage backendRegistry Request {requestWai = request} responseBu
                 dockerCapturePackage = either Just (const Nothing) result,
                 dockerCaptureAutoCreate = either (const Nothing) Just result
               }
-       in pure $ Just $ redirectOrProxy request backendRegistry capture responseBuilder
+       in pure $ Just $ redirectOrProxy request backendRegistry alwaysProxy capture responseBuilder
   | otherwise =
       pure Nothing
   where
@@ -134,10 +142,15 @@ matchDocker matchImage backendRegistry Request {requestWai = request} responseBu
 redirectOrProxy ::
   Wai.Request ->
   ByteString ->
+  -- | Flag indicating whether to always proxy and never redirect.
+  Bool ->
   RuleCapture ->
   ResponseBuilder response ->
   response
-redirectOrProxy request domain !capture ResponseBuilder {..}
+redirectOrProxy request domain alwaysProxy !capture ResponseBuilder {..}
+  | alwaysProxy =
+      -- Proxy request unconditionally
+      proxyTo (const capture) domain
   | shouldRedirectDockerRequest request =
       -- As with the Host header we have to respect the proxy protocol
       -- when redirecting.
