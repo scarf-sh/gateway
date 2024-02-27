@@ -288,16 +288,35 @@ sanitizeDockerhubDomain domain = case domain of
   "registry.hub.docker.com" -> "registry-1.docker.io"
   domain -> domain
 
-newDockerRuleV1 :: Text -> [Text] -> Text -> Rule
-newDockerRuleV1 package image backendDomain =
+newDockerRuleV1 ::
+  -- Package identifier
+  Text ->
+  -- | Docker image components. e.g. ["library", "hello-world"].
+  [Text] ->
+  -- | Docker registry requests are redirected or proxied to.
+  Text ->
+  -- | Flag indicating whether to always proxy and never redirect.
+  Bool ->
+  Rule
+newDockerRuleV1 package image backendDomain alwaysProxy =
   RuleDockerV1
     DockerRuleV1
       { ruleImages = HashMap.singleton image package,
-        ruleBackendRegistry = Text.encodeUtf8 (sanitizeDockerhubDomain backendDomain)
+        ruleBackendRegistry = Text.encodeUtf8 (sanitizeDockerhubDomain backendDomain),
+        ruleAlwaysProxy = alwaysProxy
       }
 
-newDockerRuleV2 :: Text -> Text -> Text -> Rule
-newDockerRuleV2 ruleId textPattern backendDomain =
+newDockerRuleV2 ::
+  -- | Collection identifier
+  Text ->
+  -- | Pattern matching images to redirect or proxy
+  Text ->
+  -- | Docker registry requests are redirected or proxied to.
+  Text ->
+  -- | Flag indicating whether to always proxy and never redirect.
+  Bool ->
+  Rule
+newDockerRuleV2 ruleId textPattern backendDomain alwaysProxy =
   RuleDockerV2
     DockerRuleV2
       { ruleImagePattern =
@@ -305,7 +324,8 @@ newDockerRuleV2 ruleId textPattern backendDomain =
             Nothing -> error "Invalid Pattern"
             Just p -> p,
         ruleRuleId = ruleId,
-        ruleBackendRegistry = Text.encodeUtf8 (sanitizeDockerhubDomain backendDomain)
+        ruleBackendRegistry = Text.encodeUtf8 (sanitizeDockerhubDomain backendDomain),
+        ruleAlwaysProxy = alwaysProxy
       }
 
 -- | Unsafely parses the templates and returns a flatfile rule.

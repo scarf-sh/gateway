@@ -230,7 +230,7 @@ test_gateway_docker_rule_v1 =
     "Gateway, Docker Pull"
     ( newGatewayConfig
         [ ( "test.scarf.sh",
-            [ newDockerRuleV1 "package-1" ["library", "hello-world"] "docker.io"
+            [ newDockerRuleV1 "package-1" ["library", "hello-world"] "docker.io" False
             ]
           )
         ]
@@ -292,7 +292,7 @@ test_gateway_docker_rule_v1_proxied =
     "Gateway, Docker Pull with proxied requests"
     ( newGatewayConfig
         [ ( "test.scarf.sh",
-            [ newDockerRuleV1 "package-1" ["library", "hello-world"] "docker.io"
+            [ newDockerRuleV1 "package-1" ["library", "hello-world"] "docker.io" False
             ]
           )
         ]
@@ -354,7 +354,7 @@ test_gateway_docker_rule_v2 =
     "Gateway, Docker Pull (with auto package creation)"
     ( newGatewayConfig
         [ ( "test.scarf.sh",
-            [ newDockerRuleV2 "test-rule-1" "library/*" "docker.io"
+            [ newDockerRuleV2 "test-rule-1" "library/*" "docker.io" False
             ]
           )
         ]

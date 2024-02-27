@@ -29,6 +29,7 @@ import Data.Aeson.Encode.Pretty (encodePretty)
 import Data.Bifunctor (second)
 import Data.ByteString.Lazy (ByteString)
 import Data.HashMap.Strict qualified as HashMap
+import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import Data.Text qualified as Text
 import Scarf.Gateway.ImagePattern qualified as ImagePattern
@@ -74,7 +75,8 @@ data ManifestRule
         -- | e.g. @"library/hello-world"@
         manifestRuleRepositoryName :: !Text,
         -- | e.g. @docker.io@, @ghcr.io@
-        manifestRuleBackendRegistry :: !Text
+        manifestRuleBackendRegistry :: !Text,
+        manifestRuleAlwaysProxy :: !(Maybe Bool)
       }
   | ManifestDockerRuleV2
       { -- | Owner of the package
@@ -86,7 +88,8 @@ data ManifestRule
         -- | Id of the corresponding rule in the database
         manifestRuleId :: !Text,
         -- | e.g. @docker.io@
-        manifestRuleBackendRegistry :: !Text
+        manifestRuleBackendRegistry :: !Text,
+        manifestRuleAlwaysProxy :: !(Maybe Bool)
       }
   | ManifestFileRuleV1
       { -- | Package name
@@ -204,6 +207,7 @@ instance FromJSON ManifestRule where
           <*> o .: "domain"
           <*> o .: "repository-name"
           <*> o .: "registry"
+          <*> o .:? "always-proxy"
       "docker-v2" ->
         ManifestDockerRuleV2
           <$> o .:? "owner" .!= ""
@@ -211,6 +215,7 @@ instance FromJSON ManifestRule where
           <*> o .: "pattern"
           <*> o .: "rule-id"
           <*> o .: "registry"
+          <*> o .:? "always-proxy"
       "file-v1" ->
         ManifestFileRuleV1
           <$> o .:? "package-name" .!= ""
@@ -260,7 +265,8 @@ instance ToJSON ManifestRule where
           "package-id" .= manifestRulePackageId,
           "domain" .= manifestRuleDomain,
           "repository-name" .= manifestRuleRepositoryName,
-          "registry" .= manifestRuleBackendRegistry
+          "registry" .= manifestRuleBackendRegistry,
+          "always-proxy" .= manifestRuleAlwaysProxy
         ]
   toJSON ManifestDockerRuleV2 {..} =
     object $
@@ -270,7 +276,8 @@ instance ToJSON ManifestRule where
           "domain" .= manifestRuleDomain,
           "registry" .= manifestRuleBackendRegistry,
           "pattern" .= manifestRulePattern,
-          "rule-id" .= manifestRuleId
+          "rule-id" .= manifestRuleId,
+          "always-proxy" .= manifestRuleAlwaysProxy
         ]
   toJSON ManifestFileRuleV1 {..} =
     object $
@@ -357,11 +364,13 @@ manifestRuleToRule manifestRule = case manifestRule of
       manifestRulePackageId
       (Text.splitOn "/" manifestRuleRepositoryName)
       manifestRuleBackendRegistry
+      (fromMaybe False manifestRuleAlwaysProxy)
   ManifestDockerRuleV2 {..} ->
     newDockerRuleV2
       manifestRuleId
       (ImagePattern.toText manifestRulePattern)
       manifestRuleBackendRegistry
+      (fromMaybe False manifestRuleAlwaysProxy)
   ManifestFileRuleV1 {..} ->
     newFlatfileRule
       manifestRulePackageId
