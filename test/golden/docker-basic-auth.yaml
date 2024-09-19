@@ -1,0 +1,12 @@
+path: /v2/library/enterprise/manifests/latest
+headers:
+  Host: mariadb.com
+  Authorization: Basic ZGVtbzpwQDU1dzByZA==
+manifest:
+  rules:
+    - type:  docker-v1
+      repository-name: library/enterprise
+      domain: mariadb.com
+      registry: ghcr.io
+      package-id: "d7e7f172-67af-4b5b-ba6d-c9eab0903b0c"
+
