@@ -151,6 +151,10 @@ redirectOrProxy request domain alwaysProxy !capture ResponseBuilder {..}
   | alwaysProxy =
       -- Proxy request unconditionally
       proxyTo (const capture) domain
+  -- when a basic authorization header is present, it will be proxied
+  | Just authHeader <- lookup "Authorization" (Wai.requestHeaders request),
+    "Basic" `ByteString.isPrefixOf` authHeader =
+      proxyTo (const capture) domain
   | shouldRedirectDockerRequest request =
       -- As with the Host header we have to respect the proxy protocol
       -- when redirecting.
