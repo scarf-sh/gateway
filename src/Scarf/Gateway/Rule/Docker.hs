@@ -158,7 +158,7 @@ redirectOrProxy request domain alwaysProxy !capture ResponseBuilder {..}
   | shouldRedirectDockerRequest request =
       -- As with the Host header we have to respect the proxy protocol
       -- when redirecting.
-      let !absoluteUrl = "https://" <> domain <> Wai.rawPathInfo request
+      let !absoluteUrl = "https://" <> domain <> Wai.rawPathInfo request <> Wai.rawQueryString request
        in redirectTo capture absoluteUrl
   | otherwise =
       proxyTo (const capture) domain
