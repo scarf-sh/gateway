@@ -524,6 +524,8 @@ optimizeRules (rule : rules) =
                       }
                 )
                 ys
+        (RulePixel pixel1, RulePixel pixel2)
+          | pixel1 == pixel2 -> go x ys
         (RulePythonV1 r1, RulePythonV1 r2) ->
           let mergeFiles :: Text -> PythonPackage -> PythonPackage -> PythonPackage
               mergeFiles packageName p1 p2 =
