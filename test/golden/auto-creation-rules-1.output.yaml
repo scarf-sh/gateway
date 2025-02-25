@@ -1,12 +1,13 @@
-capture: |-
-  Just
-    DockerCapture
-      { dockerCaptureImage = [ "library" , "proxy" ]
-      , dockerCaptureReference = "latest"
-      , dockerCaptureBackendRegistry = "ghcr.io"
-      , dockerCapturePackage = Nothing
-      , dockerCaptureAutoCreate = Just "rule-123"
-      }
+captures: |-
+  [ Just
+      DockerCapture
+        { dockerCaptureImage = [ "library" , "proxy" ]
+        , dockerCaptureReference = "latest"
+        , dockerCaptureBackendRegistry = "ghcr.io"
+        , dockerCapturePackage = Nothing
+        , dockerCaptureAutoCreate = Just "rule-123"
+        }
+  ]
 headers:
   Location: https://ghcr.io/v2/library/proxy/manifests/latest
   X-This-Request-Was-Proxied: '1'

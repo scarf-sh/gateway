@@ -1,10 +1,11 @@
-capture: |-
-  Just
-    FlatfileCapture
-      { fileAbsoluteUrl = Just "https://some.host/blah/blah?prefix=foo"
-      , fileVariables = fromList [ ( "path" , "blah/blah" ) ]
-      , filePackage = "a1b331fa-1539-49e5-bdc4-dc8a48e586d1"
-      }
+captures: |-
+  [ Just
+      FlatfileCapture
+        { fileAbsoluteUrl = Just "https://some.host/blah/blah?prefix=foo"
+        , fileVariables = fromList [ ( "path" , "blah/blah" ) ]
+        , filePackage = "a1b331fa-1539-49e5-bdc4-dc8a48e586d1"
+        }
+  ]
 headers:
   Location: https://some.host/blah/blah?prefix=foo
 query: ?prefix=foo

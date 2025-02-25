@@ -1,11 +1,12 @@
-capture: |-
-  Just
-    PythonCapture
-      { pythonCapturePackage = Just "123"
-      , pythonCaptureVersion = Nothing
-      , pythonCaptureFileName = Nothing
-      , pythonCaptureFileBackendURL = Nothing
-      }
+captures: |-
+  [ Just
+      PythonCapture
+        { pythonCapturePackage = Just "123"
+        , pythonCaptureVersion = Nothing
+        , pythonCaptureFileName = Nothing
+        , pythonCaptureFileBackendURL = Nothing
+        }
+  ]
 headers:
   Content-Length: '126'
   Content-Type: text/html
