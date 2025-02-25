@@ -1,0 +1,14 @@
+captures: |-
+  [ Just
+      TelemetryEventCapture
+        { telemetryEventPackage = Just "123"
+        , telemetryEvent = fromList [ ( "y" , String "World" ) ]
+        }
+  , Just
+      TelemetryEventCapture
+        { telemetryEventPackage = Just "123"
+        , telemetryEvent = fromList [ ( "x" , String "Hello" ) ]
+        }
+  ]
+headers: {}
+status: 200

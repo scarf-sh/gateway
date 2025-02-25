@@ -25,14 +25,6 @@ import Control.Monad.IO.Class
     liftIO,
   )
 import Control.Monad.IO.Unlift (MonadUnliftIO, withRunInIO)
--- import Control.Monad.Trans.AWS
---   ( endpointHost,
---     endpointPort,
---     endpointSecure,
---     runAWST,
---     send,
---     serviceEndpoint,
---   )
 import Control.Retry (recoverAll, retryPolicyDefault)
 import Data.ByteString (ByteString)
 import Data.ByteString.Char8 (split)
@@ -43,13 +35,13 @@ import Data.IORef
     readIORef,
     writeIORef,
   )
-import Data.List qualified as List
 import Data.Text (Text)
 import Data.Text qualified as Text
 import Data.Text.Encoding qualified as Text
 import Scarf.Gateway.Rule
   ( Rule,
     optimizeRules,
+    sortRules,
   )
 import Scarf.Lib.Tracing
   ( ActiveSpan,
@@ -101,15 +93,20 @@ type DomainLookup =
 fetchDomainMapping :: (MonadIO m) => ActiveSpan -> SyncConfig -> GetIfChanged f -> m (f DomainLookup)
 fetchDomainMapping span SyncConfig {..} getIfChanged = do
   let buildDomainMapping domainRules =
-        let mapping =
+        let toDomain domain =
+              case split ':' domain of
+                domain : _ -> domain
+                [] -> error "impossible"
+
+            mapping =
               HashMap.fromListWith
                 (++)
                 [ -- Domains are case insensitive. We normalize all domains to lower case.
-                  (Text.toLower domain, optimizeRules $ List.sort rules)
+                  (Text.toLower domain, optimizeRules $ sortRules rules)
                   | (domain, rules) <- domainRules
                 ]
          in \domain ->
-              case HashMap.lookup (Text.toLower (Text.decodeUtf8 (head (split ':' domain)))) mapping of
+              case HashMap.lookup (Text.toLower (Text.decodeUtf8 (toDomain domain))) mapping of
                 Nothing -> []
                 Just rules -> rules
   case getIfChanged of

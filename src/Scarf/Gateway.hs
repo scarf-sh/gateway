@@ -25,6 +25,7 @@ where
 
 import Control.Applicative ((<|>))
 import Control.Exception (finally)
+import Control.Monad (forM_)
 import Control.Monad.Fix (fix)
 import Data.Aeson (encode, object, (.=))
 import Data.ByteString (ByteString)
@@ -44,6 +45,7 @@ import Network.HTTP.Types
     notFound404,
     notModified304,
     ok200,
+    unauthorized401,
     unprocessableEntity422,
   )
 import Network.Wai
@@ -138,6 +140,23 @@ gateway tracer GatewayConfig {..} = do
     case match of
       Just (_rule, redirectOrProxy) -> do
         case redirectOrProxy of
+          RespondTelemetryEvents telemetryEventPackage telemetryEvents ->
+            respondOk tracer span request respond
+              `finally` forM_
+                telemetryEvents
+                ( \telemetryEvent ->
+                    gatewayReportRequest
+                      span
+                      request
+                      ok200
+                      ( Just
+                          ( TelemetryEventCapture
+                              { telemetryEventPackage,
+                                telemetryEvent
+                              }
+                          )
+                      )
+                )
           RedirectTo capture absoluteUrl ->
             redirectTo tracer span absoluteUrl request respond
               `finally` gatewayReportRequest span request found302 (Just capture)
@@ -171,6 +190,9 @@ gateway tracer GatewayConfig {..} = do
           RespondInvalidRequest ->
             invalidRequest tracer span request respond
               `finally` gatewayReportRequest span request unprocessableEntity422 Nothing
+          RespondUnauthorized ->
+            unauthorized tracer span request respond
+              `finally` gatewayReportRequest span request unauthorized401 Nothing
       Nothing ->
         notFound request respond
           `finally` gatewayReportRequest span request notFound404 Nothing
@@ -227,6 +249,14 @@ invalidRequest ::
 invalidRequest tracer span = \_request respond ->
   traced_ tracer (spanOpts "invalid-request" (childOf span)) $ \_span -> do
     respond (responseBuilder unprocessableEntity422 [] mempty)
+
+unauthorized ::
+  Tracer ->
+  ActiveSpan ->
+  Application
+unauthorized tracer span = \_request respond ->
+  traced_ tracer (spanOpts "unauthorized-request" (childOf span)) $ \_span -> do
+    respond (responseBuilder unauthorized401 [] mempty)
 
 -- Best case: we can send a redirect back to the client.
 -- TODO better types, redirectTo expects an absolute URL

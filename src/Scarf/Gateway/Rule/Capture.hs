@@ -10,7 +10,7 @@ module Scarf.Gateway.Rule.Capture
   )
 where
 
-import Data.Aeson (Value)
+import Data.Aeson (Object, Value)
 import Data.ByteString (ByteString)
 import Data.HashMap.Strict (HashMap)
 import Data.Text (Text)
@@ -58,6 +58,10 @@ data RuleCapture
   | ScarfJsCapture
       { scarfJsRequestBody :: !Value,
         scarfJsPackage :: !(Maybe Text)
+      }
+  | TelemetryEventCapture
+      { telemetryEventPackage :: !(Maybe Text),
+        telemetryEvent :: !Object
       }
   deriving (Eq, Show)
 

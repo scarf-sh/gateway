@@ -128,6 +128,8 @@ logRequest tracer idGen _origin lock span request responseStatus capture =
             addTag span ("python-package", StringT package)
         Just ScarfJsCapture {} ->
           pure ()
+        Just TelemetryEventCapture {} ->
+          pure ()
         Nothing ->
           pure ()
 
