@@ -18,9 +18,11 @@ module Scarf.Gateway.Rule
     newScarfJsRule,
     newPythonRule,
     newCatchAllRule,
+    newTelemetryRule,
     optimizeRules,
     RedirectOrProxy (..),
     ResponseHeaders (..),
+    sortRules,
 
     -- * Matching rules
     RuleCapture (..),
@@ -42,9 +44,11 @@ import Data.HashMap.Strict (HashMap)
 import Data.HashMap.Strict qualified as HashMap
 import Data.HashSet (HashSet)
 import Data.HashSet qualified as HashSet
+import Data.List qualified
 import Data.Text (Text)
 import Data.Text qualified as Text
 import Data.Text.Encoding qualified as Text
+import Network.HTTP.Types qualified
 import Network.HTTP.Types.URI
   ( Query,
     parseQuery,
@@ -72,6 +76,7 @@ import Scarf.Gateway.Rule.Docker
   )
 import Scarf.Gateway.Rule.Request (Request (..), newRequest)
 import Scarf.Gateway.Rule.Response (ResponseBuilder (..))
+import Scarf.Gateway.Rule.Telemetry qualified
 import Scarf.Gateway.URLTemplate (URLTemplate)
 import Scarf.Gateway.URLTemplate qualified as URLTemplate
 
@@ -205,41 +210,48 @@ data Rule
   | RulePythonV1 PythonRuleV1
   | RuleScarfJs
   | RuleCatchAllV1 CatchAllRuleV1
-  deriving (Show, Eq)
+  | RuleTelemetryV1 Scarf.Gateway.Rule.Telemetry.TelemetryRuleV1
+  deriving (Show)
 
-instance Ord Rule where
-  a `compare` b = case (a, b) of
-    (RuleDockerV1 _, RuleDockerV1 _) -> EQ
-    (RuleDockerV1 _, _) -> LT
-    (RuleDockerV2 _, RuleDockerV1 _) -> GT
-    (RuleDockerV2 _, _) -> LT
-    (RulePixel _, RuleDockerV1 _) -> GT
-    (RulePixel _, RuleDockerV2 _) -> GT
-    (RulePixel _, RulePixel _) -> EQ
-    (RulePixel _, _) -> LT
-    (RuleFlatfile _, RuleDockerV1 _) -> GT
-    (RuleFlatfile _, RuleDockerV2 _) -> GT
-    (RuleFlatfile _, RulePixel _) -> GT
-    (RuleFlatfile f1, RuleFlatfile f2) -> f1 `compare` f2
-    (RuleFlatfile _, RuleFileV2 _) -> LT
-    (RuleFlatfile _, RulePythonV1 _) -> LT
-    (RuleFileV2 _, RuleDockerV1 _) -> GT
-    (RuleFileV2 _, RuleDockerV2 _) -> GT
-    (RuleFileV2 _, RulePixel _) -> GT
-    (RuleFileV2 _, RuleFlatfile _) -> GT
-    (RuleFileV2 f1, RuleFileV2 f2) -> f1 `compare` f2
-    (RuleFileV2 _, RulePythonV1 _) -> LT
-    (RulePythonV1 _, RuleDockerV1 _) -> GT
-    (RulePythonV1 _, RuleDockerV2 _) -> GT
-    (RulePythonV1 _, RulePixel _) -> GT
-    (RulePythonV1 _, RuleFlatfile _) -> GT
-    (RulePythonV1 _, RuleFileV2 _) -> GT
-    (RulePythonV1 p1, RulePythonV1 p2) -> p1 `compare` p2
-    (RuleScarfJs, RuleScarfJs) -> EQ
-    (RuleScarfJs, _) -> LT
-    (_, RuleScarfJs) -> GT
-    (RuleCatchAllV1 {}, _) -> GT
-    (_, RuleCatchAllV1 {}) -> LT
+sortRules :: [Rule] -> [Rule]
+sortRules =
+  Data.List.sortBy compareRules
+  where
+    compareRules a b = case (a, b) of
+      (RuleDockerV1 _, RuleDockerV1 _) -> EQ
+      (RuleDockerV1 _, _) -> LT
+      (RuleDockerV2 _, RuleDockerV1 _) -> GT
+      (RuleDockerV2 _, _) -> LT
+      (RulePixel _, RuleDockerV1 _) -> GT
+      (RulePixel _, RuleDockerV2 _) -> GT
+      (RulePixel _, RulePixel _) -> EQ
+      (RulePixel _, _) -> LT
+      (RuleFlatfile _, RuleDockerV1 _) -> GT
+      (RuleFlatfile _, RuleDockerV2 _) -> GT
+      (RuleFlatfile _, RulePixel _) -> GT
+      (RuleFlatfile f1, RuleFlatfile f2) -> f1 `compare` f2
+      (RuleFlatfile _, RuleFileV2 _) -> LT
+      (RuleFlatfile _, RulePythonV1 _) -> LT
+      (RuleFileV2 _, RuleDockerV1 _) -> GT
+      (RuleFileV2 _, RuleDockerV2 _) -> GT
+      (RuleFileV2 _, RulePixel _) -> GT
+      (RuleFileV2 _, RuleFlatfile _) -> GT
+      (RuleFileV2 f1, RuleFileV2 f2) -> f1 `compare` f2
+      (RuleFileV2 _, RulePythonV1 _) -> LT
+      (RulePythonV1 _, RuleDockerV1 _) -> GT
+      (RulePythonV1 _, RuleDockerV2 _) -> GT
+      (RulePythonV1 _, RulePixel _) -> GT
+      (RulePythonV1 _, RuleFlatfile _) -> GT
+      (RulePythonV1 _, RuleFileV2 _) -> GT
+      (RulePythonV1 p1, RulePythonV1 p2) -> p1 `compare` p2
+      (RuleScarfJs, RuleScarfJs) -> EQ
+      (RuleScarfJs, _) -> LT
+      (_, RuleScarfJs) -> GT
+      (RuleCatchAllV1 {}, _) -> GT
+      (_, RuleCatchAllV1 {}) -> LT
+      (RuleTelemetryV1 {}, RuleTelemetryV1 {}) -> EQ
+      (RuleTelemetryV1 {}, _) -> GT
+      (_, RuleTelemetryV1 {}) -> LT
 
 data ResponseHeaders = ResponseHeaders
   { contentType :: ByteString,
@@ -277,6 +289,11 @@ data RedirectOrProxy
     RespondNotModified
       !RuleCapture
       !ByteString
+  | RespondTelemetryEvents
+      -- | Package id
+      (Maybe Text)
+      [Data.Aeson.Object]
+  | RespondUnauthorized
   | RespondMethodNotAllowed
   | RespondInvalidRequest
 
@@ -502,6 +519,41 @@ pythonProjectPageHTML packageName PythonPackage {packageFiles = files} =
         <> Text.encodeUtf8Builder fileName
         <> string7 "</a><br>\n"
 
+newTelemetryRule ::
+  -- | Package this rule belongs to, if any.
+  Maybe Text ->
+  -- | URL path on which we serve the telemetry endpoint. Expects
+  -- a leading "/". E.g. /event.
+  Text ->
+  -- | Hash function to hash the Bearer token in the Authorization
+  -- header. Hashing the token on the incoming requests helps us
+  -- avoid storing a plain text representation of the access tokens.
+  (ByteString -> ByteString) ->
+  -- | List of access tokens that are authorized to push events to
+  -- this telemetry endpoint. The tokens are _not_ stored in plain
+  -- text. Instead, they are stored as hash value. See 'toAccessTokenHash'.
+  --
+  -- Nothing <=> unrestricted access
+  -- Just [] <=> no access at all
+  -- Just xs <=> access only for the specified tokens
+  Maybe [ByteString] ->
+  -- | Max. request body size of a telemetry request
+  Int ->
+  -- | Max. number of events per telemetry request
+  Int ->
+  Rule
+newTelemetryRule rulePackage incomingPath toAccessTokenHash accessTokens maxRequestBody maxEvents =
+  RuleTelemetryV1
+    Scarf.Gateway.Rule.Telemetry.TelemetryRuleV1
+      { rulePackage,
+        toAccessTokenHash,
+        accessTokens,
+        incomingPath =
+          fst (Network.HTTP.Types.decodePath (Text.encodeUtf8 incomingPath)),
+        maxRequestBody,
+        maxEvents
+      }
+
 -- | Common up rules if possible to reduce the number of rules. It's always safe
 -- to apply this function.
 optimizeRules :: [Rule] -> [Rule]
@@ -599,12 +651,16 @@ matchRule rule request = case rule of
     matchScarfJsPackageEvent request
   RuleCatchAllV1 rule ->
     matchCatchAllV1 rule request
+  RuleTelemetryV1 rule ->
+    Scarf.Gateway.Rule.Telemetry.matchTelemetryRule rule request responseBuilder
   where
     responseBuilder =
       Scarf.Gateway.Rule.Response.ResponseBuilder
         { notFound = RespondNotFound,
           redirectTo = RedirectTo,
-          proxyTo = ProxyTo
+          proxyTo = ProxyTo,
+          unauthorized = RespondUnauthorized,
+          telemetryResponse = RespondTelemetryEvents
         }
 
 matchFlatfile ::

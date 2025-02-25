@@ -1,0 +1,13 @@
+path: /events
+method: POST
+headers:
+  Host: cool-stuff.io
+  Authorization: Bearer 12345abcde
+manifest:
+  rules:
+    - type:  telemetry-v1
+      domain: cool-stuff.io
+      package-id: "123"
+      incoming-path: /events
+      access-tokens:
+        - 12345abcde

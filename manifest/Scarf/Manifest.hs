@@ -32,6 +32,7 @@ import Data.HashMap.Strict qualified as HashMap
 import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import Data.Text qualified as Text
+import Data.Text.Encoding qualified as Text
 import Scarf.Gateway.ImagePattern qualified as ImagePattern
 import Scarf.Gateway.Regex (Regex)
 import Scarf.Gateway.Rule
@@ -42,6 +43,7 @@ import Scarf.Gateway.Rule
     newFileRuleV2,
     newFlatfileRule,
     newPythonRule,
+    newTelemetryRule,
     optimizeRules,
   )
 import Scarf.Gateway.URLTemplate (URLTemplate)
@@ -160,6 +162,16 @@ data ManifestRule
         -- | Target domain to redirect to
         manifestRuleRedirectTargetDomain :: !(Maybe Text)
       }
+  | ManifestRuleTelemetryV1
+      { -- | e.g. cr.l5d.io
+        manifestRuleDomain :: !Domain,
+        -- | e.g. /events
+        manifestRuleTelemetryIncomingPath :: !Text,
+        -- | Package id this file belongs to
+        manifestRulePackageId :: !Text,
+        -- | Access tokens
+        manifestRuleAccessTokens :: !(Maybe [Text])
+      }
   deriving (Eq, Show)
 
 data PythonFileHashV1 = PythonFileHashV1
@@ -252,6 +264,12 @@ instance FromJSON ManifestRule where
           <*> o .: "domain"
           <*> o .: "package-id"
           <*> o .:? "redirect-target-domain"
+      "telemetry-v1" ->
+        ManifestRuleTelemetryV1
+          <$> o .: "domain"
+          <*> o .: "incoming-path"
+          <*> o .: "package-id"
+          <*> o .:? "access-tokens"
       _ ->
         fail "invalid manifest rule type"
 
@@ -327,6 +345,15 @@ instance ToJSON ManifestRule where
           "package-id" .= manifestRulePackageId,
           "redirect-target-domain" .= manifestRuleRedirectTargetDomain
         ]
+  toJSON ManifestRuleTelemetryV1 {..} =
+    object $
+      dropNull
+        [ "type" .= ("telemetry-v1" :: Text),
+          "domain" .= manifestRuleDomain,
+          "incoming-path" .= manifestRuleTelemetryIncomingPath,
+          "package-id" .= manifestRulePackageId,
+          "access-tokens" .= manifestRuleAccessTokens
+        ]
 
 dropNull :: [(a, Value)] -> [(a, Value)]
 dropNull = filter $ \(_, x) -> case x of
@@ -400,3 +427,11 @@ manifestRuleToRule manifestRule = case manifestRule of
     newCatchAllRule
       manifestRulePackageId
       manifestRuleRedirectTargetDomain
+  ManifestRuleTelemetryV1 {..} ->
+    newTelemetryRule
+      (Just manifestRulePackageId)
+      manifestRuleTelemetryIncomingPath
+      id -- Don't do any hashing in testing
+      (fmap (fmap Text.encodeUtf8) manifestRuleAccessTokens)
+      256
+      10

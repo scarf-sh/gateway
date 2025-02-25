@@ -89,6 +89,7 @@ library
     Scarf.Gateway.Rule.Docker
     Scarf.Gateway.Rule.Request
     Scarf.Gateway.Rule.Response
+    Scarf.Gateway.Rule.Telemetry
     Scarf.Gateway.Sync
     Scarf.Gateway.URLTemplate
 
@@ -105,6 +106,7 @@ library
     , burrito
     , bytestring
     , case-insensitive
+    , deepseq
     , conduit
     , containers
     , cryptohash-sha256

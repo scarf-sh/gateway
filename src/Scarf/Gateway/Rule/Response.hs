@@ -3,16 +3,25 @@ module Scarf.Gateway.Rule.Response
   )
 where
 
+import Data.Aeson qualified
 import Data.ByteString (ByteString)
+import Data.Text (Text)
 import Network.Wai qualified as Wai
 import Scarf.Gateway.Rule.Capture (RuleCapture)
 
 -- | Allows building an abstract response from the rule matchers. Keeping the
 -- response abstract helps keeps us honest and eases testing.
 data ResponseBuilder response = ResponseBuilder
-  { -- | Returns a 404 not found
+  { telemetryResponse ::
+      Maybe Text ->
+      -- \^ Package id
+      [Data.Aeson.Object] ->
+      response,
+    -- | Returns a 404 not found
     notFound ::
       RuleCapture ->
+      response,
+    unauthorized ::
       response,
     -- | Absolute url, e.g. https://registry.docker.com/v2/library/hello-world/..
     redirectTo ::
