@@ -1,15 +1,16 @@
-capture: |-
-  Just
-    FlatfileCapture
-      { fileAbsoluteUrl =
-          Just "https://datausa.io/some-example-package/0.1.2.4-head"
-      , fileVariables =
-          fromList
-            [ ( "packageName" , "some-example-package" )
-            , ( "version" , "0.1.2.4-head" )
-            ]
-      , filePackage = "a1b331fa-1539-49e5-bdc4-dc8a48e586d1"
-      }
+captures: |-
+  [ Just
+      FlatfileCapture
+        { fileAbsoluteUrl =
+            Just "https://datausa.io/some-example-package/0.1.2.4-head"
+        , fileVariables =
+            fromList
+              [ ( "packageName" , "some-example-package" )
+              , ( "version" , "0.1.2.4-head" )
+              ]
+        , filePackage = "a1b331fa-1539-49e5-bdc4-dc8a48e586d1"
+        }
+  ]
 headers:
   Location: https://datausa.io/some-example-package/0.1.2.4-head
 status: 302

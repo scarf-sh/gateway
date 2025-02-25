@@ -1,10 +1,11 @@
-capture: |-
-  Just
-    FlatfileCapture
-      { fileAbsoluteUrl = Just "https://output.com/really%2Bnice"
-      , fileVariables = fromList [ ( "variable" , "really+nice" ) ]
-      , filePackage = "21c24cd1-73fa-4970-8a6a-bc570e55b91e"
-      }
+captures: |-
+  [ Just
+      FlatfileCapture
+        { fileAbsoluteUrl = Just "https://output.com/really%2Bnice"
+        , fileVariables = fromList [ ( "variable" , "really+nice" ) ]
+        , filePackage = "21c24cd1-73fa-4970-8a6a-bc570e55b91e"
+        }
+  ]
 headers:
   Location: https://output.com/really%2Bnice
 status: 302

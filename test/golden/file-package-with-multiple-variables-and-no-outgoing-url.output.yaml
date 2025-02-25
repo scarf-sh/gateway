@@ -1,11 +1,12 @@
-capture: |-
-  Just
-    FlatfileCapture
-      { fileAbsoluteUrl = Nothing
-      , fileVariables =
-          fromList
-            [ ( "somevar" , "very-nice" ) , ( "somevar2" , "really-nice" ) ]
-      , filePackage = "21c24cd1-73fa-4970-8a6a-bc570e55b91e"
-      }
+captures: |-
+  [ Just
+      FlatfileCapture
+        { fileAbsoluteUrl = Nothing
+        , fileVariables =
+            fromList
+              [ ( "somevar" , "very-nice" ) , ( "somevar2" , "really-nice" ) ]
+        , filePackage = "21c24cd1-73fa-4970-8a6a-bc570e55b91e"
+        }
+  ]
 headers: {}
 status: 200

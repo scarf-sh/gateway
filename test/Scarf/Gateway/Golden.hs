@@ -5,7 +5,6 @@
 
 module Scarf.Gateway.Golden (test_gateway_golden) where
 
-import Control.Concurrent (newEmptyMVar, putMVar, takeMVar)
 import Control.Monad (when)
 import Data.Aeson
   ( FromJSON (..),
@@ -24,7 +23,6 @@ import Data.ByteString.Lazy qualified
 import Data.CaseInsensitive qualified as CaseInsensitive
 import Data.HashMap.Strict qualified as HashMap
 import Data.IORef (newIORef, readIORef, writeIORef)
-import Data.List (sort)
 import Data.Map.Strict qualified as Map
 import Data.Text (Text)
 import Data.Text.Encoding (decodeUtf8, encodeUtf8)
@@ -62,6 +60,7 @@ import Scarf.Gateway.Rule
   ( newPixelRule,
     newScarfJsRule,
     optimizeRules,
+    sortRules,
   )
 import Scarf.Gateway.Rule.Capture
   ( CapturedRequest,
@@ -96,8 +95,8 @@ data Output = Output
     outputStatus :: Int,
     -- | Response HTTP headers
     outputHeaders :: [(Text, Text)],
-    -- | Response Capture, this is what we feed into the DockerLogProcessor
-    outputCapture :: CapturedRequest
+    -- | Response Capture(s), this is what we feed into the DockerLogProcessor
+    outputCaptures :: [CapturedRequest]
   }
 
 -- | Construct a new 'GatewayConfig' from a 'Manifest'.
@@ -110,7 +109,7 @@ newGatewayConfig manifest =
           ("scarf.sh", [newScarfJsRule])
             : ("static.scarf.sh", [newPixelRule "image/png" "<this could be your png>"])
             : manifestToRules manifest
-      mapping = fmap (optimizeRules . sort) (HashMap.fromList rules)
+      mapping = fmap (optimizeRules . sortRules) (HashMap.fromList rules)
    in GatewayConfig
         { gatewayModifyProxyDomain = \domain -> (domain, True),
           gatewayDomainRules = \_ domain ->
@@ -161,12 +160,13 @@ goldenTests testsDirectory = do
     -- all of tasty-goldens goodies and nice integration with the tasty ecosystem.
     testResult <- unsafeInterleaveIO $ do
       -- Run the input in a Wai session and produce a Response and a CaptureRequest
-      chan <- newEmptyMVar
+      chan <- newIORef []
       requestId <- newRequestId
       let config =
             (newGatewayConfig inputManifest)
               { gatewayReportRequest = \_span request responseStatus capture -> do
-                  putMVar chan $
+                  captures <- readIORef chan
+                  writeIORef chan $
                     ( request,
                       captureRequest
                         (read "2022-01-11 08:34:00.914835 UTC")
@@ -175,6 +175,7 @@ goldenTests testsDirectory = do
                         responseStatus
                         capture
                     )
+                      : captures
               }
           headers =
             fmap (bimap (CaseInsensitive.mk . encodeUtf8) encodeUtf8) inputHeaders
@@ -200,9 +201,15 @@ goldenTests testsDirectory = do
                 writeIORef bodyRef ByteString.empty
                 pure result
             }
-      (request, capture) <- takeMVar chan
 
-      let output =
+      captures <- readIORef chan
+
+      let request =
+            case captures of
+              (request, _capture) : _ -> request
+              _ -> error "no captures emitted during test"
+
+          output =
             Output
               { outputQueryString =
                   decodeUtf8 (rawQueryString request),
@@ -210,8 +217,8 @@ goldenTests testsDirectory = do
                   fromEnum simpleStatus,
                 outputHeaders =
                   fmap (bimap (decodeUtf8 . CaseInsensitive.original) decodeUtf8) simpleHeaders,
-                outputCapture =
-                  capture
+                outputCaptures =
+                  fmap snd captures
               }
 
       pure (Data.ByteString.Lazy.fromStrict (Data.Yaml.encode output), simpleBody)
@@ -259,7 +266,7 @@ instance ToJSON Output where
     object $
       [ "status" .= outputStatus,
         "headers" .= Map.fromList outputHeaders,
-        "capture" .= Text.Show.Pretty.ppShow outputCapture
+        "captures" .= Text.Show.Pretty.ppShow outputCaptures
       ]
         <> [ "query" .= outputQueryString
              | outputQueryString /= ""
