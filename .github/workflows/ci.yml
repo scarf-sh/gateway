@@ -24,6 +24,11 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libpcre3 libpcre3-dev
+
     - uses: haskell/actions/setup@v1.2
       id: setup-haskell-cabal
       name: Setup Haskell
