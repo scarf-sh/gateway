@@ -7,8 +7,6 @@ module Scarf.Gateway.Rule.Telemetry
   )
 where
 
-import Control.DeepSeq
-import Control.Exception qualified
 import Data.Aeson qualified
 import Data.Aeson.Decoding qualified
 import Data.Aeson.Decoding.ByteString.Lazy qualified
@@ -63,10 +61,9 @@ matchTelemetryRule TelemetryRuleV1 {..} Request {..} ResponseBuilder {..}
       withAuthentication $ do
         requestBody <-
           Network.Wai.lazyRequestBody requestWai
-        -- Force all the events so that we do not leak the request body.
-        telemetryEvents <-
-          Control.Exception.evaluate $
-            force $
+        -- Note that this is a lazy list. We'll consume the parsed events
+        -- when reporting the events to the backend.
+        let telemetryEvents =
               parseTelemetryEvents requestBody
         pure $
           Just (telemetryResponse rulePackage telemetryEvents)

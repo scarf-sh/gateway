@@ -106,7 +106,6 @@ library
     , burrito
     , bytestring
     , case-insensitive
-    , deepseq
     , conduit
     , containers
     , cryptohash-sha256

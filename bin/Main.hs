@@ -10,8 +10,6 @@ import Data.ByteString.Lazy (readFile)
 import Data.Foldable (for_)
 import Data.Maybe (fromMaybe)
 import Data.Text (Text)
-import Data.Text qualified as Text
-import Data.Text.Encoding qualified as Text
 import Data.Time (getCurrentTime)
 import Network.HTTP.Client (Manager, ManagerSettings (..), newManager)
 import Network.HTTP.Client.OpenSSL
@@ -105,43 +103,27 @@ logRequest ::
   Request ->
   -- | Response status
   Status ->
-  Maybe RuleCapture ->
+  [RuleCapture] ->
   IO ()
-logRequest tracer idGen _origin lock span request responseStatus capture =
+logRequest tracer idGen _origin lock span request responseStatus captures =
   runTracer tracer $
     traced_ (spanOpts "emit-output" (childOf span)) $ \span -> liftIO $ do
       addTag span ("response-status", IntT (fromIntegral (fromEnum responseStatus)))
-      case capture of
-        Just FlatfileCapture {fileAbsoluteUrl, filePackage} -> do
-          for_ fileAbsoluteUrl $ \fileAbsoluteUrl ->
-            addTag span ("file-absolute-url", StringT (Text.decodeUtf8 fileAbsoluteUrl))
-          addTag span ("file-package", StringT filePackage)
-        Just DockerCapture {dockerCaptureImage, dockerCaptureReference, dockerCaptureAutoCreate} -> do
-          addTag span ("docker-image", StringT (Text.intercalate "/" dockerCaptureImage))
-          addTag span ("docker-reference", StringT dockerCaptureReference)
-          for_ dockerCaptureAutoCreate $ \rule ->
-            addTag span ("docker-auto-create-rule", StringT rule)
-        Just (PixelCapture pixelId) ->
-          addTag span ("pixel-id", StringT pixelId)
-        Just PythonCapture {pythonCapturePackage} -> do
-          for_ pythonCapturePackage $ \package ->
-            addTag span ("python-package", StringT package)
-        Just ScarfJsCapture {} ->
-          pure ()
-        Just TelemetryEventCapture {} ->
-          pure ()
-        Nothing ->
-          pure ()
-
       requestId <- idGen
       now <- getCurrentTime
-      let capturedRequest =
-            captureRequest now requestId request responseStatus capture
+      let capturedRequests =
+            map
+              (captureRequest now requestId request responseStatus)
+              ( case captures of
+                  [] -> [Nothing]
+                  captures -> map Just captures
+              )
 
       _spanCtx <- getSpanContext span
 
       withLock lock $ do
-        hPutStrLn stdout (show capturedRequest)
+        for_ capturedRequests $ \capturedRequest ->
+          hPutStrLn stdout (show capturedRequest)
         -- Flush to avoid "stuck" outputs
         hFlush stdout
 

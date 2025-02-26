@@ -2,12 +2,12 @@ captures: |-
   [ Just
       TelemetryEventCapture
         { telemetryEventPackage = Just "123"
-        , telemetryEvent = fromList [ ( "y" , String "World" ) ]
+        , telemetryEvent = fromList [ ( "x" , String "Hello" ) ]
         }
   , Just
       TelemetryEventCapture
         { telemetryEventPackage = Just "123"
-        , telemetryEvent = fromList [ ( "x" , String "Hello" ) ]
+        , telemetryEvent = fromList [ ( "y" , String "World" ) ]
         }
   ]
 headers: {}

@@ -25,7 +25,6 @@ where
 
 import Control.Applicative ((<|>))
 import Control.Exception (finally)
-import Control.Monad (forM_)
 import Control.Monad.Fix (fix)
 import Data.Aeson (encode, object, (.=))
 import Data.ByteString (ByteString)
@@ -140,22 +139,24 @@ gateway tracer GatewayConfig {..} = do
     case match of
       Just (_rule, redirectOrProxy) -> do
         case redirectOrProxy of
-          RespondTelemetryEvents telemetryEventPackage telemetryEvents ->
+          RespondTelemetryEvents telemetryEventPackage telemetryEvents -> do
+            -- This is very different than the handling of other responses: We
+            -- want to lazily stream the parsed telemetry events to the backend
+            -- so that we don't have to materialize and keep all the events in
+            -- memory at once.
+            -- As such, we have to report them before sending the response.
+            gatewayReportRequest
+              span
+              request
+              ok200
+              [ TelemetryEventCapture
+                  { telemetryEventPackage,
+                    telemetryEvent
+                  }
+                | telemetryEvent <- telemetryEvents
+              ]
+
             respondOk tracer span request respond
-              `finally` forM_
-                telemetryEvents
-                ( \telemetryEvent ->
-                    gatewayReportRequest
-                      span
-                      request
-                      ok200
-                      ( [ TelemetryEventCapture
-                            { telemetryEventPackage,
-                              telemetryEvent
-                            }
-                        ]
-                      )
-                )
           RedirectTo capture absoluteUrl ->
             redirectTo tracer span absoluteUrl request respond
               `finally` gatewayReportRequest span request found302 [capture]
