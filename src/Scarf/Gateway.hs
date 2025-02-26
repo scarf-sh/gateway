@@ -95,7 +95,7 @@ data GatewayConfig = GatewayConfig
     -- Request values to Text.
     gatewayDomainRules :: ActiveSpan -> ByteString -> IO [Rule],
     -- | How to report a request.
-    gatewayReportRequest :: ActiveSpan -> Request -> Status -> Maybe RuleCapture -> IO (),
+    gatewayReportRequest :: ActiveSpan -> Request -> Status -> [RuleCapture] -> IO (),
     -- | An 'Application' that proxies requests to the given host.
     gatewayProxyTo ::
       ActiveSpan ->
@@ -149,17 +149,16 @@ gateway tracer GatewayConfig {..} = do
                       span
                       request
                       ok200
-                      ( Just
-                          ( TelemetryEventCapture
-                              { telemetryEventPackage,
-                                telemetryEvent
-                              }
-                          )
+                      ( [ TelemetryEventCapture
+                            { telemetryEventPackage,
+                              telemetryEvent
+                            }
+                        ]
                       )
                 )
           RedirectTo capture absoluteUrl ->
             redirectTo tracer span absoluteUrl request respond
-              `finally` gatewayReportRequest span request found302 (Just capture)
+              `finally` gatewayReportRequest span request found302 [capture]
           ProxyTo mkCapture domain ->
             let (targetDomain, shouldUseTLS) = gatewayModifyProxyDomain domain
              in gatewayProxyTo
@@ -171,31 +170,31 @@ gateway tracer GatewayConfig {..} = do
                     let !status = responseStatus response
                         !capture = mkCapture response
                     respond response
-                      `finally` gatewayReportRequest span request status (Just capture)
+                      `finally` gatewayReportRequest span request status [capture]
           RespondBytes capture headers bytes ->
             respondBytes tracer span headers bytes request respond
-              `finally` gatewayReportRequest span request ok200 (Just capture)
+              `finally` gatewayReportRequest span request ok200 [capture]
           RespondOk capture ->
             respondOk tracer span request respond
-              `finally` gatewayReportRequest span request ok200 (Just capture)
+              `finally` gatewayReportRequest span request ok200 [capture]
           RespondNotFound capture ->
             notFound request respond
-              `finally` gatewayReportRequest span request notFound404 (Just capture)
+              `finally` gatewayReportRequest span request notFound404 [capture]
           RespondNotModified capture etag ->
             notModified tracer span etag request respond
-              `finally` gatewayReportRequest span request notModified304 (Just capture)
+              `finally` gatewayReportRequest span request notModified304 [capture]
           RespondMethodNotAllowed ->
             methodNotAllowed tracer span request respond
-              `finally` gatewayReportRequest span request methodNotAllowed405 Nothing
+              `finally` gatewayReportRequest span request methodNotAllowed405 []
           RespondInvalidRequest ->
             invalidRequest tracer span request respond
-              `finally` gatewayReportRequest span request unprocessableEntity422 Nothing
+              `finally` gatewayReportRequest span request unprocessableEntity422 []
           RespondUnauthorized ->
             unauthorized tracer span request respond
-              `finally` gatewayReportRequest span request unauthorized401 Nothing
+              `finally` gatewayReportRequest span request unauthorized401 []
       Nothing ->
         notFound request respond
-          `finally` gatewayReportRequest span request notFound404 Nothing
+          `finally` gatewayReportRequest span request notFound404 []
 
 -- Sensible default for cases in which we don't know about a request.
 -- TODO: Nice to have, separate error responses for unknown host and

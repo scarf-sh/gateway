@@ -22,7 +22,7 @@ import Data.ByteString qualified as ByteString
 import Data.ByteString.Lazy qualified
 import Data.CaseInsensitive qualified as CaseInsensitive
 import Data.HashMap.Strict qualified as HashMap
-import Data.IORef (newIORef, readIORef, writeIORef)
+import Data.IORef (modifyIORef', newIORef, readIORef, writeIORef)
 import Data.Map.Strict qualified as Map
 import Data.Text (Text)
 import Data.Text.Encoding (decodeUtf8, encodeUtf8)
@@ -164,61 +164,60 @@ goldenTests testsDirectory = do
       requestId <- newRequestId
       let config =
             (newGatewayConfig inputManifest)
-              { gatewayReportRequest = \_span request responseStatus capture -> do
-                  captures <- readIORef chan
-                  writeIORef chan $
-                    ( request,
-                      captureRequest
-                        (read "2022-01-11 08:34:00.914835 UTC")
-                        requestId
-                        request
-                        responseStatus
-                        capture
+              { gatewayReportRequest = \_span request responseStatus captures -> do
+                  modifyIORef' chan $
+                    ( [ captureRequest
+                          (read "2022-01-11 08:34:00.914835 UTC")
+                          requestId
+                          request
+                          responseStatus
+                          (Just capture)
+                        | capture <- captures
+                      ]
+                        <>
                     )
-                      : captures
               }
           headers =
             fmap (bimap (CaseInsensitive.mk . encodeUtf8) encodeUtf8) inputHeaders
+
+      let testRequest :: Network.Wai.Request
+          testRequest =
+            (setPath defaultRequest (encodeUtf8 inputPath))
+              { requestMethod =
+                  encodeUtf8 inputMethod,
+                requestHeaderHost =
+                  lookup "Host" headers,
+                requestHeaderUserAgent =
+                  lookup "User-Agent" headers,
+                requestHeaderReferer =
+                  lookup "Referer" headers,
+                requestHeaders =
+                  headers,
+                requestBody = do
+                  result <- readIORef bodyRef
+                  writeIORef bodyRef ByteString.empty
+                  pure result
+              }
+
       SResponse
         { simpleStatus,
           simpleHeaders,
           simpleBody
-        } <- flip runSession (gateway nullTracer config) $ do
-        request $
-          (setPath defaultRequest (encodeUtf8 inputPath))
-            { requestMethod =
-                encodeUtf8 inputMethod,
-              requestHeaderHost =
-                lookup "Host" headers,
-              requestHeaderUserAgent =
-                lookup "User-Agent" headers,
-              requestHeaderReferer =
-                lookup "Referer" headers,
-              requestHeaders =
-                headers,
-              requestBody = do
-                result <- readIORef bodyRef
-                writeIORef bodyRef ByteString.empty
-                pure result
-            }
+        } <-
+        flip runSession (gateway nullTracer config) (request testRequest)
 
       captures <- readIORef chan
 
-      let request =
-            case captures of
-              (request, _capture) : _ -> request
-              _ -> error "no captures emitted during test"
-
-          output =
+      let output =
             Output
               { outputQueryString =
-                  decodeUtf8 (rawQueryString request),
+                  decodeUtf8 (rawQueryString testRequest),
                 outputStatus =
                   fromEnum simpleStatus,
                 outputHeaders =
                   fmap (bimap (decodeUtf8 . CaseInsensitive.original) decodeUtf8) simpleHeaders,
                 outputCaptures =
-                  fmap snd captures
+                  captures
               }
 
       pure (Data.ByteString.Lazy.fromStrict (Data.Yaml.encode output), simpleBody)

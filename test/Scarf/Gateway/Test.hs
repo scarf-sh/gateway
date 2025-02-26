@@ -137,7 +137,7 @@ gatewayProxyRequest host path =
       }
 
 type RunRequest =
-  ByteString -> ByteString -> Session (SResponse, Maybe RuleCapture)
+  ByteString -> ByteString -> Session (SResponse, [RuleCapture])
 
 -- | Abstracting over how to obtain a 'GatewayConfig' allows us to also
 -- read them from Manifests.
@@ -193,15 +193,15 @@ gatewayProxyTestCase name toConfig session = do
           config
             { gatewayReportRequest =
                 gatewayReportRequest config
-                  <> ( \_span _request _responseStatus capture -> do
-                         putMVar chan capture
+                  <> ( \_span _request _responseStatus captures -> do
+                         putMVar chan captures
                      )
             }
 
         runRequest = \host path -> do
           response <- gatewayProxyRequest host path
-          capture <- liftIO (takeMVar chan)
-          pure (response, capture)
+          captures <- liftIO (takeMVar chan)
+          pure (response, captures)
 
     _ <- runSession (session runRequest) (gateway nullTracer config')
     pure ()
@@ -241,50 +241,50 @@ test_gateway_docker_rule_v1 =
 
       liftIO $
         capture
-          @?= Just
-            ( DockerCapture
-                { dockerCaptureImage = [],
-                  dockerCaptureReference = "",
-                  dockerCaptureBackendRegistry = "docker.io",
-                  dockerCapturePackage = Nothing,
-                  dockerCaptureAutoCreate = Nothing
-                }
-            )
+          @?= [ ( DockerCapture
+                    { dockerCaptureImage = [],
+                      dockerCaptureReference = "",
+                      dockerCaptureBackendRegistry = "docker.io",
+                      dockerCapturePackage = Nothing,
+                      dockerCaptureAutoCreate = Nothing
+                    }
+                )
+              ]
 
       (response2, capture) <- request "test.scarf.sh" "/v2/"
       assertRedirect "https://docker.io/v2/" response2
 
       liftIO $
         capture
-          @?= Just
-            ( DockerCapture
-                { dockerCaptureImage = [],
-                  dockerCaptureReference = "",
-                  dockerCaptureBackendRegistry = "docker.io",
-                  dockerCapturePackage = Nothing,
-                  dockerCaptureAutoCreate = Nothing
-                }
-            )
+          @?= [ ( DockerCapture
+                    { dockerCaptureImage = [],
+                      dockerCaptureReference = "",
+                      dockerCaptureBackendRegistry = "docker.io",
+                      dockerCapturePackage = Nothing,
+                      dockerCaptureAutoCreate = Nothing
+                    }
+                )
+              ]
 
       (response3, capture) <- request "test.scarf.sh" "/v2/library/hello-world/manifests/latest"
       assertRedirect "https://docker.io/v2/library/hello-world/manifests/latest" response3
 
       liftIO $
         capture
-          @?= Just
-            ( DockerCapture
-                { dockerCaptureImage = ["library", "hello-world"],
-                  dockerCaptureReference = "latest",
-                  dockerCaptureBackendRegistry = "docker.io",
-                  dockerCapturePackage = Just "package-1",
-                  dockerCaptureAutoCreate = Nothing
-                }
-            )
+          @?= [ ( DockerCapture
+                    { dockerCaptureImage = ["library", "hello-world"],
+                      dockerCaptureReference = "latest",
+                      dockerCaptureBackendRegistry = "docker.io",
+                      dockerCapturePackage = Just "package-1",
+                      dockerCaptureAutoCreate = Nothing
+                    }
+                )
+              ]
 
       (response4, capture) <- request "test.scarf.sh" "/v2/library/nginx/manifests/latest"
       assertStatus 404 response4
 
-      liftIO $ capture @?= Nothing
+      liftIO $ capture @?= []
 
 test_gateway_docker_rule_v1_proxied :: TestTree
 test_gateway_docker_rule_v1_proxied =
@@ -303,50 +303,50 @@ test_gateway_docker_rule_v1_proxied =
 
       liftIO $
         capture
-          @?= Just
-            ( DockerCapture
-                { dockerCaptureImage = [],
-                  dockerCaptureReference = "",
-                  dockerCaptureBackendRegistry = "docker.io",
-                  dockerCapturePackage = Nothing,
-                  dockerCaptureAutoCreate = Nothing
-                }
-            )
+          @?= [ ( DockerCapture
+                    { dockerCaptureImage = [],
+                      dockerCaptureReference = "",
+                      dockerCaptureBackendRegistry = "docker.io",
+                      dockerCapturePackage = Nothing,
+                      dockerCaptureAutoCreate = Nothing
+                    }
+                )
+              ]
 
       (response2, capture) <- request "test.scarf.sh" "/v2/"
       _assertProxiedRedirect "https://docker.io/v2/" response2
 
       liftIO $
         capture
-          @?= Just
-            ( DockerCapture
-                { dockerCaptureImage = [],
-                  dockerCaptureReference = "",
-                  dockerCaptureBackendRegistry = "docker.io",
-                  dockerCapturePackage = Nothing,
-                  dockerCaptureAutoCreate = Nothing
-                }
-            )
+          @?= [ ( DockerCapture
+                    { dockerCaptureImage = [],
+                      dockerCaptureReference = "",
+                      dockerCaptureBackendRegistry = "docker.io",
+                      dockerCapturePackage = Nothing,
+                      dockerCaptureAutoCreate = Nothing
+                    }
+                )
+              ]
 
       (response3, capture) <- request "test.scarf.sh" "/v2/library/hello-world/manifests/latest"
       _assertProxiedRedirect "https://docker.io/v2/library/hello-world/manifests/latest" response3
 
       liftIO $
         capture
-          @?= Just
-            ( DockerCapture
-                { dockerCaptureImage = ["library", "hello-world"],
-                  dockerCaptureReference = "latest",
-                  dockerCaptureBackendRegistry = "docker.io",
-                  dockerCapturePackage = Just "package-1",
-                  dockerCaptureAutoCreate = Nothing
-                }
-            )
+          @?= [ ( DockerCapture
+                    { dockerCaptureImage = ["library", "hello-world"],
+                      dockerCaptureReference = "latest",
+                      dockerCaptureBackendRegistry = "docker.io",
+                      dockerCapturePackage = Just "package-1",
+                      dockerCaptureAutoCreate = Nothing
+                    }
+                )
+              ]
 
       (response4, capture) <- request "test.scarf.sh" "/v2/library/nginx/manifests/latest"
       assertStatus 404 response4
 
-      liftIO $ capture @?= Nothing
+      liftIO $ capture @?= []
 
 test_gateway_docker_rule_v2 :: TestTree
 test_gateway_docker_rule_v2 =
@@ -365,15 +365,15 @@ test_gateway_docker_rule_v2 =
 
       liftIO $
         capture
-          @?= Just
-            ( DockerCapture
-                { dockerCaptureImage = [],
-                  dockerCaptureReference = "",
-                  dockerCaptureBackendRegistry = "docker.io",
-                  dockerCapturePackage = Nothing,
-                  dockerCaptureAutoCreate = Nothing
-                }
-            )
+          @?= [ ( DockerCapture
+                    { dockerCaptureImage = [],
+                      dockerCaptureReference = "",
+                      dockerCaptureBackendRegistry = "docker.io",
+                      dockerCapturePackage = Nothing,
+                      dockerCaptureAutoCreate = Nothing
+                    }
+                )
+              ]
 
       (response2, _) <- request "test.scarf.sh" "/v2/"
       assertRedirect "https://docker.io/v2/" response2
@@ -386,30 +386,30 @@ test_gateway_docker_rule_v2 =
 
       liftIO $
         capture
-          @?= Just
-            ( DockerCapture
-                { dockerCaptureImage = ["library", "nginx"],
-                  dockerCaptureReference = "latest",
-                  dockerCaptureBackendRegistry = "docker.io",
-                  dockerCapturePackage = Nothing,
-                  dockerCaptureAutoCreate = Just "test-rule-1"
-                }
-            )
+          @?= [ ( DockerCapture
+                    { dockerCaptureImage = ["library", "nginx"],
+                      dockerCaptureReference = "latest",
+                      dockerCaptureBackendRegistry = "docker.io",
+                      dockerCapturePackage = Nothing,
+                      dockerCaptureAutoCreate = Just "test-rule-1"
+                    }
+                )
+              ]
 
       (response5, capture) <- request "test.scarf.sh" "/v2/library/redis/manifests/1.0"
       assertRedirect "https://docker.io/v2/library/redis/manifests/1.0" response5
 
       liftIO $
         capture
-          @?= Just
-            ( DockerCapture
-                { dockerCaptureImage = ["library", "redis"],
-                  dockerCaptureReference = "1.0",
-                  dockerCaptureBackendRegistry = "docker.io",
-                  dockerCapturePackage = Nothing,
-                  dockerCaptureAutoCreate = Just "test-rule-1"
-                }
-            )
+          @?= [ ( DockerCapture
+                    { dockerCaptureImage = ["library", "redis"],
+                      dockerCaptureReference = "1.0",
+                      dockerCaptureBackendRegistry = "docker.io",
+                      dockerCapturePackage = Nothing,
+                      dockerCaptureAutoCreate = Just "test-rule-1"
+                    }
+                )
+              ]
 
 test_gateway_manifest_roundtrip :: TestTree
 test_gateway_manifest_roundtrip =
@@ -450,69 +450,69 @@ test_gateway_manifest =
       assertRedirect "https://docker.io/v2/library/proxy/manifests/latest" response1
       liftIO $
         capture
-          @?= Just
-            ( DockerCapture
-                { dockerCaptureImage = ["library", "proxy"],
-                  dockerCaptureReference = "latest",
-                  dockerCaptureBackendRegistry = "docker.io",
-                  dockerCapturePackage = Nothing,
-                  dockerCaptureAutoCreate = Just "4"
-                }
-            )
+          @?= [ ( DockerCapture
+                    { dockerCaptureImage = ["library", "proxy"],
+                      dockerCaptureReference = "latest",
+                      dockerCaptureBackendRegistry = "docker.io",
+                      dockerCapturePackage = Nothing,
+                      dockerCaptureAutoCreate = Just "4"
+                    }
+                )
+              ]
 
       (response2, capture) <- request "dysinger.docker.scarf53.sh" "/v2/library/controller/manifests/latest"
       assertRedirect "https://ghcr.io/v2/library/controller/manifests/latest" response2
       liftIO $
         capture
-          @?= Just
-            ( DockerCapture
-                { dockerCaptureImage = ["library", "controller"],
-                  dockerCaptureReference = "latest",
-                  dockerCaptureBackendRegistry = "ghcr.io",
-                  dockerCapturePackage = Just "aaf2ec15-5244-484b-845a-ffd559e5f802",
-                  dockerCaptureAutoCreate = Nothing
-                }
-            )
+          @?= [ ( DockerCapture
+                    { dockerCaptureImage = ["library", "controller"],
+                      dockerCaptureReference = "latest",
+                      dockerCaptureBackendRegistry = "ghcr.io",
+                      dockerCapturePackage = Just "aaf2ec15-5244-484b-845a-ffd559e5f802",
+                      dockerCaptureAutoCreate = Nothing
+                    }
+                )
+              ]
 
-      (response3, capture) <- request "mochajen.gateway.scarf53.sh" "/avisstoragebox/darwin/1.0"
+      (response3, captures) <- request "mochajen.gateway.scarf53.sh" "/avisstoragebox/darwin/1.0"
       assertRedirect "https://github.com/aviaviavi/curl-runnings/releases/download/1.0/curl-runnings-1.0-darwin.tar.gz" response3
       liftIO $
-        capture
-          @?= Just
-            ( FlatfileCapture
-                { fileAbsoluteUrl = Just "https://github.com/aviaviavi/curl-runnings/releases/download/1.0/curl-runnings-1.0-darwin.tar.gz",
-                  fileVariables =
-                    HashMap.fromList
-                      [ ("platform", "darwin"),
-                        ("version", "1.0")
-                      ],
-                  filePackage = "9495e1d9-2832-4a3d-8b98-b334173afb17"
-                }
-            )
+        captures
+          @?= [ ( FlatfileCapture
+                    { fileAbsoluteUrl = Just "https://github.com/aviaviavi/curl-runnings/releases/download/1.0/curl-runnings-1.0-darwin.tar.gz",
+                      fileVariables =
+                        HashMap.fromList
+                          [ ("platform", "darwin"),
+                            ("version", "1.0")
+                          ],
+                      filePackage = "9495e1d9-2832-4a3d-8b98-b334173afb17"
+                    }
+                )
+              ]
 
-      (response4, capture) <- request "mochajen.gateway.scarf53.sh" "/something-here/windows/ver1.0.tar.gz"
+      (response4, captures) <- request "mochajen.gateway.scarf53.sh" "/something-here/windows/ver1.0.tar.gz"
       assertRedirect "https://bucket.s3.aws.amazon.com/something-here/windows/ver1.0.tar.gz" response4
       liftIO $
-        capture
-          @?= Just
-            ( FlatfileCapture
-                { fileAbsoluteUrl = Just "https://bucket.s3.aws.amazon.com/something-here/windows/ver1.0.tar.gz",
-                  fileVariables = HashMap.empty,
-                  filePackage = "44d540c0-41f2-469f-98de-50e1a705bd65"
-                }
-            )
+        captures
+          @?= [ ( FlatfileCapture
+                    { fileAbsoluteUrl = Just "https://bucket.s3.aws.amazon.com/something-here/windows/ver1.0.tar.gz",
+                      fileVariables = HashMap.empty,
+                      filePackage = "44d540c0-41f2-469f-98de-50e1a705bd65"
+                    }
+                )
+              ]
 
-      (response5, capture) <- request "ctl.test.org" "/install"
+      (response5, captures) <- request "ctl.test.org" "/install"
       assertRedirect "https://raw.githubusercontent.com/testorg/testctl/master/install.sh" response5
       liftIO $
-        capture
-          @?= Just
-            ( FlatfileCapture
-                { fileAbsoluteUrl = Just "https://raw.githubusercontent.com/testorg/testctl/master/install.sh",
-                  fileVariables = HashMap.empty,
-                  filePackage = "aaf2ec15-5244-484b-845a-ffd559e5f802"
-                }
-            )
+        captures
+          @?= [ ( FlatfileCapture
+                    { fileAbsoluteUrl = Just "https://raw.githubusercontent.com/testorg/testctl/master/install.sh",
+                      fileVariables = HashMap.empty,
+                      filePackage = "aaf2ec15-5244-484b-845a-ffd559e5f802"
+                    }
+                )
+              ]
 
 test_gateway_file_rule :: TestTree
 test_gateway_file_rule =
@@ -529,53 +529,51 @@ test_gateway_file_rule =
         ]
     )
     $ \request -> do
-      (response1, capture) <- request "test.scarf.sh" "/minikube-linux-amd64"
+      (response1, captures) <- request "test.scarf.sh" "/minikube-linux-amd64"
       assertRedirect "https://some-backend-1/downloads/minikube/linux/amd64" response1
 
       liftIO $
-        capture
-          @?= Just
-            ( FlatfileCapture
-                { fileAbsoluteUrl = Just "https://some-backend-1/downloads/minikube/linux/amd64",
-                  fileVariables =
-                    HashMap.fromList
-                      [ ("package", "minikube"),
-                        ("os", "linux"),
-                        ("arch", "amd64")
-                      ],
-                  filePackage = "package-123"
-                }
-            )
+        captures
+          @?= [ FlatfileCapture
+                  { fileAbsoluteUrl = Just "https://some-backend-1/downloads/minikube/linux/amd64",
+                    fileVariables =
+                      HashMap.fromList
+                        [ ("package", "minikube"),
+                          ("os", "linux"),
+                          ("arch", "amd64")
+                        ],
+                    filePackage = "package-123"
+                  }
+              ]
 
-      (response2, capture) <- request "test.scarf.sh1" "/kubernetes-1.0.tar.gz"
+      (response2, captures) <- request "test.scarf.sh1" "/kubernetes-1.0.tar.gz"
       assertStatus 404 response2
-      liftIO $ capture @?= Nothing
+      liftIO $ captures @?= []
 
-      (response3, capture) <- request "test.scarf.sh" "/minikube"
+      (response3, captures) <- request "test.scarf.sh" "/minikube"
       assertStatus 404 response3
-      liftIO $ capture @?= Nothing
+      liftIO $ captures @?= []
 
-      (response4, capture) <- request "test.scarf.sh" "/minikube-linux"
+      (response4, captures) <- request "test.scarf.sh" "/minikube-linux"
       assertStatus 404 response4
-      liftIO $ capture @?= Nothing
+      liftIO $ captures @?= []
 
       (response5, capture) <- request "test.scarf.sh" "/minikube-linux-amd64-hallo"
       assertRedirect "https://some-backend-1/downloads/minikube/linux/amd64-hallo" response5
 
       liftIO $
         capture
-          @?= Just
-            ( FlatfileCapture
-                { fileAbsoluteUrl = Just "https://some-backend-1/downloads/minikube/linux/amd64-hallo",
-                  fileVariables =
-                    HashMap.fromList
-                      [ ("package", "minikube"),
-                        ("os", "linux"),
-                        ("arch", "amd64-hallo")
-                      ],
-                  filePackage = "package-123"
-                }
-            )
+          @?= [ FlatfileCapture
+                  { fileAbsoluteUrl = Just "https://some-backend-1/downloads/minikube/linux/amd64-hallo",
+                    fileVariables =
+                      HashMap.fromList
+                        [ ("package", "minikube"),
+                          ("os", "linux"),
+                          ("arch", "amd64-hallo")
+                        ],
+                    filePackage = "package-123"
+                  }
+              ]
 
 test_gateway_file_rule_2 :: TestTree
 test_gateway_file_rule_2 =
@@ -597,36 +595,34 @@ test_gateway_file_rule_2 =
 
       liftIO $
         capture
-          @?= Just
-            ( FlatfileCapture
-                { fileAbsoluteUrl = Just "https://some-backend-1/downloads/minikube/1/0.tar.gz",
-                  fileVariables =
-                    HashMap.fromList
-                      [ ("ext", "0.tar.gz"),
-                        ("package", "minikube"),
-                        ("version", "1")
-                      ],
-                  filePackage = "package-123"
-                }
-            )
+          @?= [ FlatfileCapture
+                  { fileAbsoluteUrl = Just "https://some-backend-1/downloads/minikube/1/0.tar.gz",
+                    fileVariables =
+                      HashMap.fromList
+                        [ ("ext", "0.tar.gz"),
+                          ("package", "minikube"),
+                          ("version", "1")
+                        ],
+                    filePackage = "package-123"
+                  }
+              ]
 
       (response2, capture) <- request "test.scarf.sh" "/minikube-1.0.iso"
       assertRedirect "https://some-backend-1/downloads/minikube/1/0.iso" response2
 
       liftIO $
         capture
-          @?= Just
-            ( FlatfileCapture
-                { fileAbsoluteUrl = Just "https://some-backend-1/downloads/minikube/1/0.iso",
-                  fileVariables =
-                    HashMap.fromList
-                      [ ("ext", "0.iso"),
-                        ("package", "minikube"),
-                        ("version", "1")
-                      ],
-                  filePackage = "package-123"
-                }
-            )
+          @?= [ FlatfileCapture
+                  { fileAbsoluteUrl = Just "https://some-backend-1/downloads/minikube/1/0.iso",
+                    fileVariables =
+                      HashMap.fromList
+                        [ ("ext", "0.iso"),
+                          ("package", "minikube"),
+                          ("version", "1")
+                        ],
+                    filePackage = "package-123"
+                  }
+              ]
 
 test_gateway_pixel_rule :: TestTree
 test_gateway_pixel_rule =
@@ -645,25 +641,25 @@ test_gateway_pixel_rule =
         ]
     )
     $ \request -> do
-      (response1, capture) <- request "static.scarf.sh" "/a.png?x-pxid=12345"
+      (response1, captures) <- request "static.scarf.sh" "/a.png?x-pxid=12345"
       assertStatus 200 response1
       assertHeader "Content-Type" "application/json" response1
       assertBody "{}" response1
 
-      liftIO $ capture @?= Just (PixelCapture "12345")
+      liftIO $ captures @?= [PixelCapture "12345"]
 
       -- We expect the request to not fail in case of missing pixel id
-      (response2, capture) <- request "static.scarf.sh" "/a.png?"
+      (response2, captures) <- request "static.scarf.sh" "/a.png?"
       assertStatus 200 response2
       assertHeader "Content-Type" "application/json" response2
       assertBody "{}" response2
 
-      liftIO $ capture @?= Just (PixelCapture "")
+      liftIO $ captures @?= [PixelCapture ""]
 
-      (response3, capture) <- request "static.scarf.sh" "/b.png"
+      (response3, captures) <- request "static.scarf.sh" "/b.png"
       assertStatus 404 response3
 
-      liftIO $ capture @?= Nothing
+      liftIO $ captures @?= []
 
 testTree :: IO [TestTree]
 testTree =
