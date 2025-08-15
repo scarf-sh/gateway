@@ -38,8 +38,8 @@ import Network.HTTP.Client (Manager)
 import Network.HTTP.Client qualified as HC
 import Network.HTTP.Types
   ( Status,
-    found302,
     hLocation,
+    temporaryRedirect307,
     methodNotAllowed405,
     notFound404,
     notModified304,
@@ -159,7 +159,7 @@ gateway tracer GatewayConfig {..} = do
             respondOk tracer span request respond
           RedirectTo capture absoluteUrl ->
             redirectTo tracer span absoluteUrl request respond
-              `finally` gatewayReportRequest span request found302 [capture]
+              `finally` gatewayReportRequest span request temporaryRedirect307 [capture]
           ProxyTo mkCapture domain ->
             let (targetDomain, shouldUseTLS) = gatewayModifyProxyDomain domain
              in gatewayProxyTo
@@ -268,7 +268,7 @@ redirectTo ::
 redirectTo tracer span absoluteUrl = \_ respond ->
   traced_ tracer (spanOpts "redirect-to" (childOf span)) $ \span -> do
     addTag span ("redirect-to", StringT (Text.decodeUtf8 absoluteUrl))
-    respond (responseLBS found302 [(hLocation, absoluteUrl)] mempty)
+    respond (responseLBS temporaryRedirect307 [(hLocation, absoluteUrl)] mempty)
 
 respondBytes ::
   Tracer ->

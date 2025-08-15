@@ -10,4 +10,4 @@ captures: |-
   ]
 headers:
   Location: https://output.com/some-nice-path/very-nice/really+nice
-status: 302
+status: 307

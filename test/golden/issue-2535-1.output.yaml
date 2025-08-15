@@ -8,4 +8,4 @@ captures: |-
   ]
 headers:
   Location: https://some.engineering/blah/blah
-status: 302
+status: 307

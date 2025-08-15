@@ -10,4 +10,4 @@ captures: |-
 headers:
   Location: https://downloads.test.sh/search?q=hello%20world
 query: ?q=hello%20world
-status: 302
+status: 307
