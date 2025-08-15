@@ -13,4 +13,4 @@ captures: |-
   ]
 headers:
   Location: https://datausa.io/some-example-package/0.1.2.4-head
-status: 302
+status: 307

@@ -208,7 +208,7 @@ gatewayProxyTestCase name toConfig session = do
 
 assertRedirect :: (HasCallStack) => ByteString -> SResponse -> Session ()
 assertRedirect location response = do
-  assertStatus 302 response
+  assertStatus 307 response
   assertHeader "Location" location response
 
 -- | We add a X-Scarf-Proxy-To header to witness that a request got proxied.

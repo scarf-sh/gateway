@@ -8,4 +8,4 @@ captures: |-
   ]
 headers:
   Location: https://downloads.test.sh/hello%20world
-status: 302
+status: 307

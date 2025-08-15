@@ -9,4 +9,4 @@ captures: |-
 headers:
   Location: https://some.host/blah/blah?prefix=foo
 query: ?prefix=foo
-status: 302
+status: 307
