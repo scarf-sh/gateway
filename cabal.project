@@ -1,8 +1,8 @@
 packages: ./*.cabal
 
-index-state: 2023-06-01T00:00:00Z
+index-state: hackage.haskell.org 2025-10-28T10:17:01Z
 
-with-compiler: ghc-9.4.4
+with-compiler: ghc-9.10.3
 
 allow-newer:
     opentracing-jaeger:base,
