@@ -485,7 +485,8 @@ test_gateway_manifest =
                           [ ("platform", "darwin"),
                             ("version", "1.0")
                           ],
-                      filePackage = "9495e1d9-2832-4a3d-8b98-b334173afb17"
+                      filePackage = "9495e1d9-2832-4a3d-8b98-b334173afb17",
+                      fileBodyVariables = []
                     }
                 )
               ]
@@ -497,7 +498,8 @@ test_gateway_manifest =
           @?= [ ( FlatfileCapture
                     { fileAbsoluteUrl = Just "https://bucket.s3.aws.amazon.com/something-here/windows/ver1.0.tar.gz",
                       fileVariables = HashMap.empty,
-                      filePackage = "44d540c0-41f2-469f-98de-50e1a705bd65"
+                      filePackage = "44d540c0-41f2-469f-98de-50e1a705bd65",
+                      fileBodyVariables = []
                     }
                 )
               ]
@@ -509,7 +511,8 @@ test_gateway_manifest =
           @?= [ ( FlatfileCapture
                     { fileAbsoluteUrl = Just "https://raw.githubusercontent.com/testorg/testctl/master/install.sh",
                       fileVariables = HashMap.empty,
-                      filePackage = "aaf2ec15-5244-484b-845a-ffd559e5f802"
+                      filePackage = "aaf2ec15-5244-484b-845a-ffd559e5f802",
+                      fileBodyVariables = []
                     }
                 )
               ]
@@ -524,6 +527,8 @@ test_gateway_file_rule =
                 "package-123"
                 "/{package}-{os}-{arch}"
                 (Just "https://some-backend-1/downloads/{package}/{os}/{arch}")
+                256
+                10
             ]
           )
         ]
@@ -542,7 +547,8 @@ test_gateway_file_rule =
                           ("os", "linux"),
                           ("arch", "amd64")
                         ],
-                    filePackage = "package-123"
+                    filePackage = "package-123",
+                    fileBodyVariables = []
                   }
               ]
 
@@ -571,7 +577,8 @@ test_gateway_file_rule =
                           ("os", "linux"),
                           ("arch", "amd64-hallo")
                         ],
-                    filePackage = "package-123"
+                    filePackage = "package-123",
+                    fileBodyVariables = []
                   }
               ]
 
@@ -585,6 +592,8 @@ test_gateway_file_rule_2 =
                 "package-123"
                 "/{package}-{version}.{ext}"
                 (Just "https://some-backend-1/downloads/{package}/{version}/{ext}")
+                256
+                10
             ]
           )
         ]
@@ -603,7 +612,8 @@ test_gateway_file_rule_2 =
                           ("package", "minikube"),
                           ("version", "1")
                         ],
-                    filePackage = "package-123"
+                    filePackage = "package-123",
+                    fileBodyVariables = []
                   }
               ]
 
@@ -620,7 +630,8 @@ test_gateway_file_rule_2 =
                           ("package", "minikube"),
                           ("version", "1")
                         ],
-                    filePackage = "package-123"
+                    filePackage = "package-123",
+                    fileBodyVariables = []
                   }
               ]
 

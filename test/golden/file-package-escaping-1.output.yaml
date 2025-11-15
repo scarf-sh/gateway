@@ -5,6 +5,7 @@ captures: |-
             Just "https://output.com/some-nice-path/very-nice/really+nice"
         , fileVariables =
             fromList [ ( "path" , "some-nice-path/very-nice/really+nice" ) ]
+        , fileBodyVariables = []
         , filePackage = "21c24cd1-73fa-4970-8a6a-bc570e55b91e"
         }
   ]

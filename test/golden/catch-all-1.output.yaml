@@ -3,6 +3,7 @@ captures: |-
       FlatfileCapture
         { fileAbsoluteUrl = Just "https://downloads.test.sh/hello%20world"
         , fileVariables = fromList []
+        , fileBodyVariables = []
         , filePackage = "8717953c-3452-4ef7-9a14-b64dc19163b4"
         }
   ]

@@ -403,6 +403,8 @@ manifestRuleToRule manifestRule = case manifestRule of
       manifestRulePackageId
       (URLTemplate.toText manifestRuleIncomingPath)
       (URLTemplate.toText <$> manifestRuleOutgoingURL)
+      256
+      10
   ManifestFileRuleV2 {..} ->
     newFileRuleV2
       manifestRulePackageId

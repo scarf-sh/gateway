@@ -1,0 +1,10 @@
+path: "/collect"
+headers:
+  Host: nicedomain.com
+manifest:
+  rules:
+    - type: file-v1
+      incoming-path: "/collect"
+      domain: nicedomain.com
+      package-id: 21c24cd1-73fa-4970-8a6a-bc570e55b91e
+      outgoing-url: null

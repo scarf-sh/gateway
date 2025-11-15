@@ -20,7 +20,6 @@ import Burrito.Internal.Type.Value (Value (String))
 import Control.Applicative ((<|>))
 import Control.Monad.Writer.Strict (execWriter, tell)
 import Data.Aeson (FromJSON (..), ToJSON (..), withText)
-import Data.Foldable (foldl')
 import Data.List qualified as List
 import Data.Maybe (fromJust)
 import Data.Text (Text)

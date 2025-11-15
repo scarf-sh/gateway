@@ -6,7 +6,8 @@ captures: |-
               "https://datausa.io/api/data?drilldowns=Nation&measures=Population"
         , fileVariables =
             fromList
-              [ ( "drilldowns" , "Nation" ) , ( "measures" , "Population" ) ]
+              [ ( "measures" , "Population" ) , ( "drilldowns" , "Nation" ) ]
+        , fileBodyVariables = []
         , filePackage = "a1b331fa-1539-49e5-bdc4-dc8a48e586d1"
         }
   ]

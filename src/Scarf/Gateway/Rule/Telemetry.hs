@@ -4,6 +4,9 @@
 module Scarf.Gateway.Rule.Telemetry
   ( TelemetryRuleV1 (..),
     matchTelemetryRule,
+
+    -- * Parsing telemetry events from request bodies
+    parseTelemetryEvents,
   )
 where
 
@@ -64,7 +67,7 @@ matchTelemetryRule TelemetryRuleV1 {..} Request {..} ResponseBuilder {..}
         -- Note that this is a lazy list. We'll consume the parsed events
         -- when reporting the events to the backend.
         let telemetryEvents =
-              parseTelemetryEvents requestBody
+              parseTelemetryEvents maxRequestBody maxEvents requestBody
         pure $
           Just (telemetryResponse rulePackage telemetryEvents)
   | otherwise =
@@ -88,29 +91,33 @@ matchTelemetryRule TelemetryRuleV1 {..} Request {..} ResponseBuilder {..}
           | otherwise ->
               pure (Just unauthorized)
 
-    --
-    parseTelemetryEvents :: LazyByteString -> [Data.Aeson.Object]
-    parseTelemetryEvents requestBody =
-      take maxEvents $
-        parseEvents $
-          Data.ByteString.Lazy.take (fromIntegral maxRequestBody) requestBody
+parseTelemetryEvents ::
+  -- | Max. size of the request body.
+  Int ->
+  -- | Max. number of events per requests
+  Int ->
+  LazyByteString ->
+  [Data.Aeson.Object]
+parseTelemetryEvents maxRequestBody maxEvents requestBody =
+  take maxEvents $
+    parseEvents $
+      Data.ByteString.Lazy.take (fromIntegral maxRequestBody) requestBody
 
-    --
-    parseEvents :: LazyByteString -> [Data.Aeson.Object]
-    parseEvents bytes'
-      | Data.ByteString.Lazy.null bytes =
+parseEvents :: LazyByteString -> [Data.Aeson.Object]
+parseEvents bytes'
+  | Data.ByteString.Lazy.null bytes =
+      []
+  | otherwise =
+      case Data.Aeson.Decoding.toEitherValue
+        (Data.Aeson.Decoding.ByteString.Lazy.lbsToTokens bytes) of
+        Left _error ->
           []
-      | otherwise =
-          case Data.Aeson.Decoding.toEitherValue
-            (Data.Aeson.Decoding.ByteString.Lazy.lbsToTokens bytes) of
-            Left _error ->
-              []
-            Right (value, rest) ->
-              case value of
-                Data.Aeson.Object object ->
-                  object : parseEvents rest
-                _ ->
-                  parseEvents rest
-      where
-        bytes =
-          Data.ByteString.Lazy.Char8.dropWhile Data.Char.isSpace bytes'
+        Right (value, rest) ->
+          case value of
+            Data.Aeson.Object object ->
+              object : parseEvents rest
+            _ ->
+              parseEvents rest
+  where
+    bytes =
+      Data.ByteString.Lazy.Char8.dropWhile Data.Char.isSpace bytes'

@@ -59,7 +59,8 @@ import Network.HTTP.Types.URI
   )
 import Network.URI (URI (..), parseRelativeReference, parseURI)
 import Network.Wai
-  ( pathInfo,
+  ( lazyRequestBody,
+    pathInfo,
     rawQueryString,
     requestMethod,
   )
@@ -102,7 +103,11 @@ data FlatfileRule = FlatfileRule
     -- | URL template for the url we redirect to from the public url.
     -- notice the use of the template variables {platform} + {version}
     -- e.g. https://github.com/kubernetes/minikube/releases/downloads/minikube-{platform}-{version}.tar.gzf
-    ruleBackendTemplate :: !(Maybe URLTemplate)
+    ruleBackendTemplate :: !(Maybe URLTemplate),
+    -- | Max. size of the request body.
+    ruleBackendMaxRequestBody :: Int,
+    -- | Max. number of events per requests
+    ruleBackendMaxEvents :: Int
   }
   deriving (Eq, Show)
 
@@ -353,8 +358,12 @@ newFlatfileRule ::
   Text ->
   -- | Backend URL template
   Maybe Text ->
+  -- | Max. size of the request body.
+  Int ->
+  -- | Max. number of events per requests
+  Int ->
   Rule
-newFlatfileRule package public backend =
+newFlatfileRule package public backend maxRequestBody maxEvents =
   let unsafeParseTemplate x = case URLTemplate.fromText x of
         Nothing -> error "Invalid URLTemplate"
         Just t -> t
@@ -365,7 +374,9 @@ newFlatfileRule package public backend =
           { rulePackage = package,
             ruleExpectedVariables = HashSet.fromList (maybe [] URLTemplate.variables backendTemplate),
             rulePublicTemplate = unsafeParseTemplate public,
-            ruleBackendTemplate = backendTemplate
+            ruleBackendTemplate = backendTemplate,
+            ruleBackendMaxRequestBody = maxRequestBody,
+            ruleBackendMaxEvents = maxEvents
           }
 
 newFileRuleV2 ::
@@ -669,12 +680,21 @@ matchFlatfile ::
   Request ->
   m (Maybe RedirectOrProxy)
 matchFlatfile FlatfileRule {..} request@Request {requestWai, requestPath, requestQueryString} = do
+  requestBody <- lazyRequestBody requestWai
+
   let -- If the public facing template captures query parameters we include the query string
       -- in the path to match, else we just check on the path.
       pathToMatch =
         if URLTemplate.capturesQuery rulePublicTemplate
           then requestPath <> requestQueryString
           else requestPath
+
+      -- This is computed lazily to avoid unnecessary work in case of no-match.
+      parsedEvents =
+        Scarf.Gateway.Rule.Telemetry.parseTelemetryEvents
+          ruleBackendMaxRequestBody
+          ruleBackendMaxEvents
+          requestBody
 
   case URLTemplate.match rulePublicTemplate pathToMatch of
     xs@(_ : _)
@@ -690,7 +710,8 @@ matchFlatfile FlatfileRule {..} request@Request {requestWai, requestPath, reques
                     ( FlatfileCapture
                         { filePackage = rulePackage,
                           fileAbsoluteUrl = Just absoluteUrl,
-                          fileVariables = extracted
+                          fileVariables = extracted,
+                          fileBodyVariables = parsedEvents
                         }
                     )
                     absoluteUrl
@@ -704,7 +725,8 @@ matchFlatfile FlatfileRule {..} request@Request {requestWai, requestPath, reques
                     ( FlatfileCapture
                         { filePackage = rulePackage,
                           fileAbsoluteUrl = Nothing,
-                          fileVariables = extracted
+                          fileVariables = extracted,
+                          fileBodyVariables = parsedEvents
                         }
                     )
                 )
@@ -728,7 +750,8 @@ matchFlatfile FlatfileRule {..} request@Request {requestWai, requestPath, reques
                     ( FlatfileCapture
                         { filePackage = rulePackage,
                           fileAbsoluteUrl = Just absoluteUrl,
-                          fileVariables = HashMap.empty
+                          fileVariables = HashMap.empty,
+                          fileBodyVariables = parsedEvents
                         }
                     )
                     absoluteUrl
@@ -743,7 +766,8 @@ matchFlatfile FlatfileRule {..} request@Request {requestWai, requestPath, reques
                     ( FlatfileCapture
                         { filePackage = rulePackage,
                           fileAbsoluteUrl = Nothing,
-                          fileVariables = HashMap.empty
+                          fileVariables = HashMap.empty,
+                          fileBodyVariables = parsedEvents
                         }
                     )
                 )
@@ -816,7 +840,8 @@ matchFileRuleV2 FileRuleV2 {..} Request {requestWai, requestPath} =
                     ( FlatfileCapture
                         { filePackage = rulePackage,
                           fileAbsoluteUrl = Just absoluteUrl,
-                          fileVariables = extracted
+                          fileVariables = extracted,
+                          fileBodyVariables = []
                         }
                     )
                     absoluteUrl
@@ -837,7 +862,8 @@ matchFileRuleV2 FileRuleV2 {..} Request {requestWai, requestPath} =
                     ( FlatfileCapture
                         { filePackage = rulePackage,
                           fileAbsoluteUrl = Just absoluteUrl,
-                          fileVariables = HashMap.empty
+                          fileVariables = HashMap.empty,
+                          fileBodyVariables = []
                         }
                     )
                     absoluteUrl
@@ -851,7 +877,8 @@ matchFileRuleV2 FileRuleV2 {..} Request {requestWai, requestPath} =
                     ( FlatfileCapture
                         { filePackage = rulePackage,
                           fileAbsoluteUrl = Nothing,
-                          fileVariables = extracted
+                          fileVariables = extracted,
+                          fileBodyVariables = []
                         }
                     )
                 )
@@ -962,6 +989,7 @@ matchCatchAllV1 CatchAllRuleV1 {..} Request {requestWai}
             ( RedirectTo
                 ( FlatfileCapture
                     { filePackage = rulePackage,
+                      fileBodyVariables = [],
                       fileAbsoluteUrl = Just absoluteUrl,
                       fileVariables = mempty
                     }
@@ -976,6 +1004,7 @@ matchCatchAllV1 CatchAllRuleV1 {..} Request {requestWai}
             ( RespondOk
                 ( FlatfileCapture
                     { filePackage = rulePackage,
+                      fileBodyVariables = [],
                       fileAbsoluteUrl = Nothing,
                       fileVariables = mempty
                     }

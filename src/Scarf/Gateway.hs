@@ -39,11 +39,11 @@ import Network.HTTP.Client qualified as HC
 import Network.HTTP.Types
   ( Status,
     hLocation,
-    temporaryRedirect307,
     methodNotAllowed405,
     notFound404,
     notModified304,
     ok200,
+    temporaryRedirect307,
     unauthorized401,
     unprocessableEntity422,
   )

@@ -5,6 +5,7 @@
 
 module Scarf.Gateway.Golden (test_gateway_golden) where
 
+import Control.Exception (catch)
 import Control.Monad (when)
 import Data.Aeson
   ( FromJSON (..),
@@ -151,8 +152,8 @@ goldenTests testsDirectory = do
     Input {..} <- decodeFileThrow inputFile
     -- Only read body file if it the Gateway wants to
     body <-
-      unsafeInterleaveIO $
-        ByteString.readFile (replaceExtension inputFile "input.body")
+      ByteString.readFile (replaceExtension inputFile "input.body")
+        `catch` \(_ :: IOError) -> pure mempty
     bodyRef <- newIORef body
     -- unsafeInterleaveIO defers running the test until testResult is demanded.
     -- Unfortunately tasty-golden doesn't support having multiple files as output.

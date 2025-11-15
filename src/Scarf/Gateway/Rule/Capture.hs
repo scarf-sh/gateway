@@ -29,6 +29,10 @@ data RuleCapture
         fileAbsoluteUrl :: Maybe ByteString,
         -- | Extracted variables and their values
         fileVariables :: HashMap Text Text,
+        -- | We do allow people to capture multiple events
+        -- by passing multiple JSON objects in the request
+        -- body.
+        fileBodyVariables :: [Object],
         -- | The package the rule belongs to
         filePackage :: Text
       }
