@@ -7,7 +7,7 @@ captures: |-
         , fileVariables =
             fromList
               [ ( "measures" , "Population" ) , ( "drilldowns" , "Nation" ) ]
-        , fileBodyVariables = []
+        , fileBodyVariables = fromList []
         , filePackage = "a1b331fa-1539-49e5-bdc4-dc8a48e586d1"
         }
   ]

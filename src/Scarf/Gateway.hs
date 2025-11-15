@@ -159,7 +159,7 @@ gateway tracer GatewayConfig {..} = do
             respondOk tracer span request respond
           RedirectTo capture absoluteUrl ->
             redirectTo tracer span absoluteUrl request respond
-              `finally` gatewayReportRequest span request temporaryRedirect307 [capture]
+              `finally` gatewayReportRequest span request temporaryRedirect307 capture
           ProxyTo mkCapture domain ->
             let (targetDomain, shouldUseTLS) = gatewayModifyProxyDomain domain
              in gatewayProxyTo
@@ -177,7 +177,7 @@ gateway tracer GatewayConfig {..} = do
               `finally` gatewayReportRequest span request ok200 [capture]
           RespondOk capture ->
             respondOk tracer span request respond
-              `finally` gatewayReportRequest span request ok200 [capture]
+              `finally` gatewayReportRequest span request ok200 capture
           RespondNotFound capture ->
             notFound request respond
               `finally` gatewayReportRequest span request notFound404 [capture]

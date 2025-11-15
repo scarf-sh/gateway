@@ -159,7 +159,7 @@ redirectOrProxy request domain alwaysProxy !capture ResponseBuilder {..}
       -- As with the Host header we have to respect the proxy protocol
       -- when redirecting.
       let !absoluteUrl = "https://" <> domain <> Wai.rawPathInfo request
-       in redirectTo capture absoluteUrl
+       in redirectTo [capture] absoluteUrl
   | otherwise =
       proxyTo (const capture) domain
 

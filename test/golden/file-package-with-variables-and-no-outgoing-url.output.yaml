@@ -3,7 +3,7 @@ captures: |-
       FlatfileCapture
         { fileAbsoluteUrl = Nothing
         , fileVariables = fromList [ ( "somevar" , "very-nice" ) ]
-        , fileBodyVariables = []
+        , fileBodyVariables = fromList []
         , filePackage = "4ba1cddc-3756-4fa3-8e80-e4db56b34816"
         }
   ]

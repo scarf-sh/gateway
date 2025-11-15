@@ -3,10 +3,14 @@ captures: |-
       FlatfileCapture
         { fileAbsoluteUrl = Nothing
         , fileVariables = fromList []
-        , fileBodyVariables =
-            [ fromList [ ( "x" , String "Hello" ) ]
-            , fromList [ ( "y" , String "World" ) ]
-            ]
+        , fileBodyVariables = fromList [ ( "x" , String "Hello" ) ]
+        , filePackage = "21c24cd1-73fa-4970-8a6a-bc570e55b91e"
+        }
+  , Just
+      FlatfileCapture
+        { fileAbsoluteUrl = Nothing
+        , fileVariables = fromList []
+        , fileBodyVariables = fromList [ ( "y" , String "World" ) ]
         , filePackage = "21c24cd1-73fa-4970-8a6a-bc570e55b91e"
         }
   ]

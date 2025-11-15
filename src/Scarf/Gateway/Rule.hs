@@ -32,6 +32,8 @@ module Scarf.Gateway.Rule
   )
 where
 
+import Data.List.NonEmpty (nonEmpty)
+import Data.Foldable (toList)
 import Crypto.Hash.SHA256 (hashlazy)
 import Data.Aeson qualified
 import Data.ByteString (ByteString)
@@ -269,7 +271,7 @@ data ResponseHeaders = ResponseHeaders
 data RedirectOrProxy
   = -- | Absolute url, e.g. https://registry.docker.com/v2/library/hello-world/..
     RedirectTo
-      !RuleCapture
+      ![RuleCapture]
       !ByteString
   | -- | Host to proxy the request to, e.g. registry.docker.com
     ProxyTo
@@ -284,7 +286,7 @@ data RedirectOrProxy
       !LBS.ByteString
   | -- | Respond OK with no data
     RespondOk
-      !RuleCapture
+      ![RuleCapture]
   | -- | We want to return a 404 for GET /v2/_catalog but if we return
     -- Nothing in the matcher it would attempt to match other rules.
     -- This constructor is used to explicitly return a 404.
@@ -707,13 +709,14 @@ matchFlatfile FlatfileRule {..} request@Request {requestWai, requestPath, reques
           pure
             ( Just
                 ( RedirectTo
-                    ( FlatfileCapture
+                    [ FlatfileCapture
                         { filePackage = rulePackage,
                           fileAbsoluteUrl = Just absoluteUrl,
                           fileVariables = extracted,
                           fileBodyVariables = parsedEvents
                         }
-                    )
+                    | parsedEvents <- maybe [mempty] toList (nonEmpty parsedEvents)
+                    ]
                     absoluteUrl
                 )
             )
@@ -722,13 +725,14 @@ matchFlatfile FlatfileRule {..} request@Request {requestWai, requestPath, reques
           pure
             ( Just
                 ( RespondOk
-                    ( FlatfileCapture
+                    [ FlatfileCapture
                         { filePackage = rulePackage,
                           fileAbsoluteUrl = Nothing,
                           fileVariables = extracted,
                           fileBodyVariables = parsedEvents
                         }
-                    )
+                    | parsedEvents <- maybe [mempty] toList (nonEmpty parsedEvents)
+                    ]
                 )
             )
     []
@@ -747,13 +751,14 @@ matchFlatfile FlatfileRule {..} request@Request {requestWai, requestPath, reques
           pure
             ( Just
                 ( RedirectTo
-                    ( FlatfileCapture
+                    [ FlatfileCapture
                         { filePackage = rulePackage,
                           fileAbsoluteUrl = Just absoluteUrl,
                           fileVariables = HashMap.empty,
                           fileBodyVariables = parsedEvents
                         }
-                    )
+                    | parsedEvents <- maybe [mempty] toList (nonEmpty parsedEvents)
+                    ]
                     absoluteUrl
                 )
             )
@@ -763,13 +768,14 @@ matchFlatfile FlatfileRule {..} request@Request {requestWai, requestPath, reques
           pure
             ( Just
                 ( RespondOk
-                    ( FlatfileCapture
+                    [ FlatfileCapture
                         { filePackage = rulePackage,
                           fileAbsoluteUrl = Nothing,
                           fileVariables = HashMap.empty,
                           fileBodyVariables = parsedEvents
                         }
-                    )
+                    | parsedEvents <- maybe [mempty] toList (nonEmpty parsedEvents)
+                    ]
                 )
             )
     _ ->
@@ -837,13 +843,13 @@ matchFileRuleV2 FileRuleV2 {..} Request {requestWai, requestPath} =
           pure
             ( Just
                 ( RedirectTo
-                    ( FlatfileCapture
+                    [ FlatfileCapture
                         { filePackage = rulePackage,
                           fileAbsoluteUrl = Just absoluteUrl,
                           fileVariables = extracted,
-                          fileBodyVariables = []
+                          fileBodyVariables = mempty
                         }
-                    )
+                    ]
                     absoluteUrl
                 )
             )
@@ -859,13 +865,13 @@ matchFileRuleV2 FileRuleV2 {..} Request {requestWai, requestPath} =
           pure
             ( Just
                 ( RedirectTo
-                    ( FlatfileCapture
+                    [ FlatfileCapture
                         { filePackage = rulePackage,
                           fileAbsoluteUrl = Just absoluteUrl,
                           fileVariables = HashMap.empty,
-                          fileBodyVariables = []
+                          fileBodyVariables = mempty
                         }
-                    )
+                    ]
                     absoluteUrl
                 )
             )
@@ -874,13 +880,13 @@ matchFileRuleV2 FileRuleV2 {..} Request {requestWai, requestPath} =
           pure
             ( Just
                 ( RespondOk
-                    ( FlatfileCapture
+                    [ FlatfileCapture
                         { filePackage = rulePackage,
                           fileAbsoluteUrl = Nothing,
                           fileVariables = extracted,
-                          fileBodyVariables = []
+                          fileBodyVariables = mempty
                         }
-                    )
+                    ]
                 )
             )
       | otherwise ->
@@ -987,13 +993,13 @@ matchCatchAllV1 CatchAllRuleV1 {..} Request {requestWai}
       pure
         ( Just
             ( RedirectTo
-                ( FlatfileCapture
+                [ FlatfileCapture
                     { filePackage = rulePackage,
-                      fileBodyVariables = [],
+                      fileBodyVariables = mempty,
                       fileAbsoluteUrl = Just absoluteUrl,
                       fileVariables = mempty
                     }
-                )
+                ]
                 absoluteUrl
             )
         )
@@ -1002,13 +1008,13 @@ matchCatchAllV1 CatchAllRuleV1 {..} Request {requestWai}
       pure
         ( Just
             ( RespondOk
-                ( FlatfileCapture
+                [ FlatfileCapture
                     { filePackage = rulePackage,
-                      fileBodyVariables = [],
+                      fileBodyVariables = mempty,
                       fileAbsoluteUrl = Nothing,
                       fileVariables = mempty
                     }
-                )
+                ]
             )
         )
 
@@ -1119,7 +1125,7 @@ matchPython PythonRuleV1 {..} Request {requestWai = request}
               pythonCaptureFileName = Just fileName,
               pythonCaptureFileBackendURL = Just fileBackendURL
             } =
-      pure $ Just $ RedirectTo capture $ Text.encodeUtf8 fileBackendURL
+      pure $ Just $ RedirectTo [capture] $ Text.encodeUtf8 fileBackendURL
   | otherwise =
       pure Nothing
   where

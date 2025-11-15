@@ -25,7 +25,7 @@ data ResponseBuilder response = ResponseBuilder
       response,
     -- | Absolute url, e.g. https://registry.docker.com/v2/library/hello-world/..
     redirectTo ::
-      RuleCapture ->
+      [RuleCapture] ->
       ByteString ->
       response,
     -- | Proxy the request to the given domain. Allowing to capture details from

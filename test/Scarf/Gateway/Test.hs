@@ -486,7 +486,7 @@ test_gateway_manifest =
                             ("version", "1.0")
                           ],
                       filePackage = "9495e1d9-2832-4a3d-8b98-b334173afb17",
-                      fileBodyVariables = []
+                      fileBodyVariables = mempty
                     }
                 )
               ]
@@ -499,7 +499,7 @@ test_gateway_manifest =
                     { fileAbsoluteUrl = Just "https://bucket.s3.aws.amazon.com/something-here/windows/ver1.0.tar.gz",
                       fileVariables = HashMap.empty,
                       filePackage = "44d540c0-41f2-469f-98de-50e1a705bd65",
-                      fileBodyVariables = []
+                      fileBodyVariables = mempty
                     }
                 )
               ]
@@ -512,7 +512,7 @@ test_gateway_manifest =
                     { fileAbsoluteUrl = Just "https://raw.githubusercontent.com/testorg/testctl/master/install.sh",
                       fileVariables = HashMap.empty,
                       filePackage = "aaf2ec15-5244-484b-845a-ffd559e5f802",
-                      fileBodyVariables = []
+                      fileBodyVariables = mempty
                     }
                 )
               ]
@@ -548,7 +548,7 @@ test_gateway_file_rule =
                           ("arch", "amd64")
                         ],
                     filePackage = "package-123",
-                    fileBodyVariables = []
+                    fileBodyVariables = mempty
                   }
               ]
 
@@ -578,7 +578,7 @@ test_gateway_file_rule =
                           ("arch", "amd64-hallo")
                         ],
                     filePackage = "package-123",
-                    fileBodyVariables = []
+                    fileBodyVariables = mempty
                   }
               ]
 
@@ -613,7 +613,7 @@ test_gateway_file_rule_2 =
                           ("version", "1")
                         ],
                     filePackage = "package-123",
-                    fileBodyVariables = []
+                    fileBodyVariables = mempty
                   }
               ]
 
@@ -631,7 +631,7 @@ test_gateway_file_rule_2 =
                           ("version", "1")
                         ],
                     filePackage = "package-123",
-                    fileBodyVariables = []
+                    fileBodyVariables = mempty
                   }
               ]
 

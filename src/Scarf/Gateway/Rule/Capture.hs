@@ -27,12 +27,13 @@ data RuleCapture
     FlatfileCapture
       { -- | Absolute URL we are redirecting to
         fileAbsoluteUrl :: Maybe ByteString,
-        -- | Extracted variables and their values
+        -- | Extracted variables and their values. These variables
+        -- are extract from query parameters and path variables.
         fileVariables :: HashMap Text Text,
         -- | We do allow people to capture multiple events
         -- by passing multiple JSON objects in the request
         -- body.
-        fileBodyVariables :: [Object],
+        fileBodyVariables :: Object,
         -- | The package the rule belongs to
         filePackage :: Text
       }
