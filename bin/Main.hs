@@ -178,7 +178,7 @@ main = withOpenSSL $ do
         let gatewayConfig =
               GatewayConfig
                 { gatewayModifyProxyDomain =
-                    \domain -> (domain, True),
+                    \_request domain -> (domain, True),
                   -- Currently this is really just for testing purposes. We don't hit
                   -- Redis or anything but instead always returning a fixed set of rules.
                   gatewayDomainRules = \_span _domain -> do

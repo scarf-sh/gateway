@@ -4,7 +4,7 @@ captures: |-
         { fileAbsoluteUrl = Nothing
         , fileVariables =
             fromList
-              [ ( "somevar2" , "really-nice" ) , ( "somevar" , "very-nice" ) ]
+              [ ( "somevar" , "very-nice" ) , ( "somevar2" , "really-nice" ) ]
         , fileBodyVariables = fromList []
         , filePackage = "21c24cd1-73fa-4970-8a6a-bc570e55b91e"
         }

@@ -151,7 +151,7 @@ For further details, please check [Scarf.Gateway.Manifest](/src/Scarf/Gateway/Ma
 
 ### Bandwidth usage: redirect vs proxy
 
-The gateway redirects whenever possible. Some versions of some container runtimes, however, do not properly authenticate with container registries when the client is redirected , and therefore the gateway is forced to proxy the requests to serve the download successfully. When Scarf Gateway must proxy, be prepared to pay for the bandwidth bill, as the container images themselves will pass through your infrastructure.
+The gateway proxies Docker registry API requests so container clients authenticate against the Scarf registry host. The proxy does not follow upstream registry redirects, so backing registries can still return signed blob storage redirects directly to the client. When a backing registry streams blobs instead of redirecting them, be prepared to pay for the bandwidth bill, as the container image bytes will pass through your infrastructure.
 
 ## Logging
 
