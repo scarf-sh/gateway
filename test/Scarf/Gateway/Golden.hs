@@ -112,7 +112,7 @@ newGatewayConfig manifest =
             : manifestToRules manifest
       mapping = fmap (optimizeRules . sortRules) (HashMap.fromList rules)
    in GatewayConfig
-        { gatewayModifyProxyDomain = \domain -> (domain, True),
+        { gatewayModifyProxyDomain = \_request domain -> (domain, True),
           gatewayDomainRules = \_ domain ->
             case HashMap.lookup domain mapping of
               Nothing -> pure []

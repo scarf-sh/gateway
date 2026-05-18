@@ -23,15 +23,16 @@ import Scarf.Gateway.Rule.Capture (RuleCapture (..))
 import Scarf.Gateway.Rule.Request (Request (..))
 import Scarf.Gateway.Rule.Response (ResponseBuilder (..))
 
--- | Rule that matches a particular image and redirects (or proxies)
--- to a backend registry.
+-- | Rule that matches a particular image and redirects or proxies registry API
+-- requests to a backend registry.
 data DockerRuleV1 = DockerRuleV1
   { -- | Image path components matching this rule. e.g. ["library", "hello-world"] and their
     -- respective package ids.
     ruleImages :: !(HashMap [Text] Text),
-    -- | Domain of the registry to redirect (or proxy) to.
+    -- | Domain of the registry to redirect or proxy to.
     ruleBackendRegistry :: !ByteString,
-    -- | Flag indicating whether to always proxy and never redirect.
+    -- | Retained for manifest compatibility. Docker registry requests are
+    -- proxied when this is set.
     ruleAlwaysProxy :: !Bool
   }
   deriving (Eq, Show)
@@ -42,9 +43,10 @@ data DockerRuleV2 = DockerRuleV2
     ruleImagePattern :: !ImagePattern.Pattern,
     -- | Id of the rule in the backend.
     ruleRuleId :: !Text,
-    -- | Domain of the registry to redirect (or proxy) to.
+    -- | Domain of the registry to redirect or proxy to.
     ruleBackendRegistry :: !ByteString,
-    -- | Flag indicating whether to always proxy and never redirect.
+    -- | Retained for manifest compatibility. Docker registry requests are
+    -- proxied when this is set.
     ruleAlwaysProxy :: !Bool
   }
   deriving (Eq, Show)
@@ -89,8 +91,8 @@ matchDockerRuleV2 DockerRuleV2 {ruleImagePattern, ruleRuleId, ruleBackendRegistr
 
 type MonadMatch m = m ~ IO
 
--- | Checks whether a 'Request' is a Docker request and determines
--- if the client supports redirects and fallbacks to proxying if not.
+-- | Checks whether a 'Request' is a Docker request and determines if the client
+-- supports redirects, falling back to proxying if not.
 --
 -- This is the Gateways core functionality, be careful when changing
 -- this function.
@@ -101,7 +103,7 @@ matchDocker ::
   DockerImageMatcher ->
   -- | Backend registry
   ByteString ->
-  -- | Flag indicating whether to always proxy and never redirect.
+  -- | Retained for manifest compatibility.
   Bool ->
   Request ->
   ResponseBuilder response ->
@@ -142,25 +144,28 @@ matchDocker matchImage backendRegistry alwaysProxy Request {requestWai = request
 redirectOrProxy ::
   Wai.Request ->
   ByteString ->
-  -- | Flag indicating whether to always proxy and never redirect.
+  -- | Retained for manifest compatibility.
   Bool ->
   RuleCapture ->
   ResponseBuilder response ->
   response
 redirectOrProxy request domain alwaysProxy !capture ResponseBuilder {..}
   | alwaysProxy =
-      -- Proxy request unconditionally
+      -- Proxy request unconditionally.
       proxyTo (const capture) domain
-  -- when a basic authorization header is present, it will be proxied
+  -- When a basic authorization header is present, it will be proxied.
   | Just authHeader <- lookup "Authorization" (Wai.requestHeaders request),
     "Basic" `ByteString.isPrefixOf` authHeader =
       proxyTo (const capture) domain
   | shouldRedirectDockerRequest request =
-      -- As with the Host header we have to respect the proxy protocol
-      -- when redirecting.
+      -- As with the Host header we have to respect the proxy protocol when
+      -- redirecting.
       let !absoluteUrl = "https://" <> domain <> Wai.rawPathInfo request
        in redirectTo [capture] absoluteUrl
   | otherwise =
+      -- Non-redirecting clients stay on the proxy path. The proxy
+      -- implementation follows registry API redirects internally and passes
+      -- signed blob storage redirects back to the client.
       proxyTo (const capture) domain
 
 shouldRedirectDockerRequest :: Wai.Request -> Bool

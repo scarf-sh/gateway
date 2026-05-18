@@ -1,4 +1,4 @@
-# A manifest download with a user-agent that is usually redirected
+# A manifest download with a Docker user-agent and legacy always-proxy config
 path: /v2/library/proxy/manifests/latest
 headers: 
   User-Agent: Docker-Client

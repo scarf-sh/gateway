@@ -34,6 +34,7 @@ import Data.ByteString.Lazy qualified as LBS
 import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import Data.Text.Encoding qualified as Text
+import Network.URI (URI (..), URIAuth (..), parseURI)
 import Network.HTTP.Client (Manager)
 import Network.HTTP.Client qualified as HC
 import Network.HTTP.Types
@@ -81,14 +82,16 @@ import Scarf.Lib.Tracing
     spanOpts,
     traceWaiApplication,
   )
+import Text.Read (readMaybe)
 
 -- | Basic configuration necessary to run a Gateway.
 data GatewayConfig = GatewayConfig
-  { -- | A modifier that's applied to a domain right before the
-    -- Gateway starts proxying through it. Scarfs usecase is to
-    -- replace certain domains with domains for our internal caches.
-    -- Also returns whether to use a secure connection for proxying.
-    gatewayModifyProxyDomain :: ByteString -> (ByteString, Bool),
+  { -- | A modifier that's applied to a domain right before the Gateway starts
+    -- proxying through it. Scarf's use case is to replace certain domains with
+    -- domains for internal caches, while still allowing request-specific routing
+    -- such as sending blob requests to the backing registry for signed storage
+    -- redirects. Also returns whether to use a secure connection for proxying.
+    gatewayModifyProxyDomain :: Request -> ByteString -> (ByteString, Bool),
     -- | Lookup function to get the available rules for a domain.
     -- This takes a ByteString to avoid unecessary conversions from
     -- Request values to Text.
@@ -161,7 +164,7 @@ gateway tracer GatewayConfig {..} = do
             redirectTo tracer span absoluteUrl request respond
               `finally` gatewayReportRequest span request temporaryRedirect307 capture
           ProxyTo mkCapture domain ->
-            let (targetDomain, shouldUseTLS) = gatewayModifyProxyDomain domain
+            let (targetDomain, shouldUseTLS) = gatewayModifyProxyDomain request domain
              in gatewayProxyTo
                   span
                   shouldUseTLS
@@ -323,7 +326,7 @@ proxyTo tracer manager span shouldUseTLS domain = \request respond ->
         proxyRequest =
           HC.defaultRequest
             { HC.checkResponse = \_ _ -> pure (),
-              HC.responseTimeout = HC.responseTimeoutMicro 10000000, -- 10 seconds
+              HC.responseTimeout = HC.responseTimeoutMicro 60000000, -- 60 seconds
               HC.method = Wai.requestMethod request,
               HC.secure = shouldUseTLS,
               HC.host = host,
@@ -334,38 +337,113 @@ proxyTo tracer manager span shouldUseTLS domain = \request respond ->
               HC.requestBody =
                 -- We don't proxy request bodies. Read-only access throuhgout.
                 mempty,
+              -- Redirect handling is done below so registry-to-registry
+              -- redirects can stay inside the proxy while signed blob storage
+              -- redirects still go directly to the client.
               HC.redirectCount = 0
             }
 
-    HC.withResponse proxyRequest manager $ \response -> do
-      respond $
-        Wai.responseStream
-          (HC.responseStatus response)
-          ( fixupResponseHeaders
-              (HC.responseStatus response)
-              (HC.responseHeaders response)
-          )
-          ( -- Make sure to only read the response body in case
-            -- the response is not a redirect. We saw the official
-            -- Docker registry respond with a Content-Length header
-            -- on a redirect (with an empty body) which throws off
-            -- http-client.
-            if isRedirect (HC.responseStatus response)
-              then \_emit _flush -> pure ()
-              else \emit flush -> do
-                let reader = HC.responseBody response
-                fix $ \loop -> do
-                  bytes <- HC.brRead reader
-                  if BS.null bytes
-                    then pure ()
-                    else do
-                      emit (byteStringInsert bytes)
-                      flush
-                      loop
-          )
+    proxyWithRegistryRedirects respond (10 :: Int) proxyRequest
   where
+    proxyWithRegistryRedirects respond redirectsLeft proxyRequest =
+      HC.withResponse proxyRequest manager $ \response -> do
+        case redirectProxyRequest
+          redirectsLeft
+          proxyRequest
+          (HC.responseStatus response)
+          (HC.responseHeaders response) of
+          Just nextRequest ->
+            proxyWithRegistryRedirects respond (redirectsLeft - 1) nextRequest
+          Nothing ->
+            respond $
+              Wai.responseStream
+                (HC.responseStatus response)
+                ( fixupResponseHeaders
+                    (HC.responseStatus response)
+                    (HC.responseHeaders response)
+                )
+                ( -- Make sure to only read the response body in case
+                  -- the response is not a redirect. We saw the official
+                  -- Docker registry respond with a Content-Length header
+                  -- on a redirect (with an empty body) which throws off
+                  -- http-client.
+                  if isRedirect (HC.responseStatus response)
+                    then \_emit _flush -> pure ()
+                    else \emit flush -> do
+                      let reader = HC.responseBody response
+                      fix $ \loop -> do
+                        bytes <- HC.brRead reader
+                        if BS.null bytes
+                          then pure ()
+                          else do
+                            emit (byteStringInsert bytes)
+                            flush
+                            loop
+                )
+
     isRedirect status =
       status `elem` [toEnum 302, toEnum 307]
+
+    redirectProxyRequest redirectsLeft proxyRequest status headers
+      | redirectsLeft <= 0 =
+          Nothing
+      | not (isRedirect status) =
+          Nothing
+      | Just location <- lookup "Location" headers,
+        isRegistryRedirect location =
+          updateProxyRequestLocation proxyRequest location
+      | otherwise =
+          Nothing
+
+    isRegistryRedirect location =
+      case parseRedirectLocation HC.defaultRequest location of
+        Just (_secure, _host, _port, path, _query) ->
+          "/v2/" `BS.isPrefixOf` path || path == "/v2"
+        Nothing ->
+          False
+
+    updateProxyRequestLocation proxyRequest location = do
+      (secure, host, port, path, queryString) <- parseRedirectLocation proxyRequest location
+      pure
+        proxyRequest
+          { HC.secure = secure,
+            HC.host = host,
+            HC.port = port,
+            HC.path = path,
+            HC.queryString = queryString
+          }
+
+    parseRedirectLocation proxyRequestBase location
+      | "/" `BS.isPrefixOf` stripped =
+          let (path, queryString) = BS.break (== '?') stripped
+           in Just
+                ( HC.secure proxyRequestBase,
+                  HC.host proxyRequestBase,
+                  HC.port proxyRequestBase,
+                  path,
+                  queryString
+                )
+      | Just URI {uriScheme, uriAuthority = Just URIAuth {uriRegName, uriPort}, uriPath, uriQuery} <-
+          parseURI (BS.unpack stripped) =
+          let secure = uriScheme == "https:"
+              port =
+                case uriPort of
+                  ':' : portString ->
+                    fromMaybe (defaultPort secure) (readMaybe portString)
+                  _ ->
+                    defaultPort secure
+              path =
+                case uriPath of
+                  "" -> "/"
+                  _ -> BS.pack uriPath
+           in Just (secure, BS.pack uriRegName, port, path, BS.pack uriQuery)
+      | otherwise =
+          Nothing
+      where
+        stripped = BS.strip location
+
+    defaultPort secure =
+      if secure then 443 else 80
 
     fixupResponseHeaders status headers =
       [ (name, sanitizedValue)

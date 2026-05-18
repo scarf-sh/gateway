@@ -64,7 +64,7 @@ newGatewayConfig ::
 newGatewayConfig rules =
   let mapping = HashMap.fromList rules
    in GatewayConfig
-        { gatewayModifyProxyDomain = \domain -> (domain, True),
+        { gatewayModifyProxyDomain = \_request domain -> (domain, True),
           gatewayDomainRules = \_ domain ->
             case HashMap.lookup domain mapping of
               Nothing -> pure []
@@ -106,7 +106,7 @@ gatewayRequest host path =
         requestHeaderHost =
           Nothing,
         requestHeaderUserAgent =
-          -- We don't want to proxy upstream in unit tests
+          -- We don't want to proxy upstream in unit tests.
           Just "Docker-Client",
         requestHeaders =
           [ -- Making sure we test the Proxy-Protocol adherence
@@ -435,7 +435,7 @@ test_gateway_manifest_2 =
 
       (response, _capture) <- request "fabioluz.gateway.scarf53.sh" "/simple/numpy/"
       assertStatus 200 response
-      assertHeader "Etag" "\"C_m1QvctH-XxmPfkfMx-IxrY6sVUBmaTq2KOmVSEdPc=\"" response
+      assertHeader "Etag" "\"aNRqlINwxk2thWQM-0Bjwdl0hF1u30jPmnvYNeyvs2k=\"" response
 
       (response, _capture) <- request "fabioluz.gateway.scarf53.sh" "/simple/numpy/numpy-1.22.1.zip"
       assertRedirect "https://files.pythonhosted.org/packages/0a/c8/a62767a6b374a0dfb02d2a0456e5f56a372cdd1689dbc6ffb6bf1ddedbc0/numpy-1.22.1.zip#sha256=e348ccf5bc5235fc405ab19d53bec215bb373300e5523c7b476cc0da8a5e9973" response

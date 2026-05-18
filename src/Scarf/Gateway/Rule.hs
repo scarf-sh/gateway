@@ -317,9 +317,9 @@ newDockerRuleV1 ::
   Text ->
   -- | Docker image components. e.g. ["library", "hello-world"].
   [Text] ->
-  -- | Docker registry requests are redirected or proxied to.
+  -- | Docker registry requests are proxied to.
   Text ->
-  -- | Flag indicating whether to always proxy and never redirect.
+  -- | Retained for manifest compatibility.
   Bool ->
   Rule
 newDockerRuleV1 package image backendDomain alwaysProxy =
@@ -335,9 +335,9 @@ newDockerRuleV2 ::
   Text ->
   -- | Pattern matching images to redirect or proxy
   Text ->
-  -- | Docker registry requests are redirected or proxied to.
+  -- | Docker registry requests are proxied to.
   Text ->
-  -- | Flag indicating whether to always proxy and never redirect.
+  -- | Retained for manifest compatibility.
   Bool ->
   Rule
 newDockerRuleV2 ruleId textPattern backendDomain alwaysProxy =

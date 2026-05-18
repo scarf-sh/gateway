@@ -2,7 +2,7 @@ packages: ./*.cabal
 
 index-state: hackage.haskell.org 2025-10-28T10:17:01Z
 
-with-compiler: ghc-9.10.3
+with-compiler: ghc-9.4.4
 
 allow-newer:
     opentracing-jaeger:base,
