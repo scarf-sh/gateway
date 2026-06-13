@@ -39,7 +39,6 @@ import Network.Wai
         requestMethod
       ),
     defaultRequest,
-    rawPathInfo,
     responseLBS,
   )
 import Network.Wai.Test
@@ -68,6 +67,7 @@ import Scarf.Gateway.Rule.Capture
     captureRequest,
     newRequestId,
   )
+import Scarf.Gateway.Rule.Response (ProxyTarget (..))
 import Scarf.Lib.Tracing (nullTracer)
 import Scarf.Manifest (Manifest, manifestToRules)
 import System.FilePath (replaceExtension, takeExtensions)
@@ -118,11 +118,11 @@ newGatewayConfig manifest =
               Nothing -> pure []
               Just xs -> pure xs,
           gatewayReportRequest = \_ _ _ _ -> pure (),
-          gatewayProxyTo = \_span isSecure host -> \request respond ->
+          gatewayProxyTo = \_span isSecure ProxyTarget {..} -> \_request respond ->
             let target =
                   (if isSecure then "https://" else "http://")
-                    <> host
-                    <> rawPathInfo request
+                    <> proxyTargetDomain
+                    <> proxyTargetPath
              in respond $
                   responseLBS
                     (toEnum 307)

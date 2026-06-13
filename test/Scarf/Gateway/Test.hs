@@ -21,7 +21,6 @@ import Network.Wai
         requestHeaders,
         requestMethod
       ),
-    rawPathInfo,
     responseLBS,
   )
 import Network.Wai.Test
@@ -41,10 +40,12 @@ import Scarf.Gateway
     RuleCapture (..),
     gateway,
     newDockerRuleV1,
+    newDockerRuleV1WithBackend,
     newDockerRuleV2,
     newFlatfileRule,
     newPixelRule,
   )
+import Scarf.Gateway.Rule.Response (ProxyTarget (..))
 import Scarf.Lib.Tracing (nullTracer)
 import Scarf.Manifest (decodeManifest, encodeManifest, manifestToRules)
 import Test.Tasty (TestName, TestTree)
@@ -70,15 +71,15 @@ newGatewayConfig rules =
               Nothing -> pure []
               Just xs -> pure xs,
           gatewayReportRequest = \_ _ _ _ -> pure (),
-          gatewayProxyTo = \_span isSecure host -> \request respond ->
+          gatewayProxyTo = \_span isSecure proxyTarget -> \_request respond ->
             -- Our dummy proxy always returns 307 for us to inspect
             -- the target location as well as a X-Scarf-Proxy-To
             -- header to be absolutely sure it was going through the
             -- proxy code path.
             let target =
                   (if isSecure then "https://" else "http://")
-                    <> host
-                    <> rawPathInfo request
+                    <> proxyTargetDomain proxyTarget
+                    <> proxyTargetPath proxyTarget
              in respond $
                   responseLBS
                     (toEnum 307)
@@ -347,6 +348,74 @@ test_gateway_docker_rule_v1_proxied =
       assertStatus 404 response4
 
       liftIO $ capture @?= []
+
+test_gateway_docker_rule_v1_renamed_backend :: TestTree
+test_gateway_docker_rule_v1_renamed_backend =
+  gatewayTestCase
+    "Gateway, Docker Pull with renamed backend repository"
+    ( newGatewayConfig
+        [ ( "test.scarf.sh",
+            [ newDockerRuleV1WithBackend "package-1" ["alpine"] ["library", "alpine"] "docker.io" False
+            ]
+          )
+        ]
+    )
+    $ \request -> do
+      (response1, capture) <- request "test.scarf.sh" "/v2/alpine/manifests/latest"
+      _assertProxiedRedirect "https://docker.io/v2/library/alpine/manifests/latest" response1
+
+      liftIO $
+        capture
+          @?= [ ( DockerCapture
+                    { dockerCaptureImage = ["alpine"],
+                      dockerCaptureReference = "latest",
+                      dockerCaptureBackendRegistry = "docker.io",
+                      dockerCapturePackage = Just "package-1",
+                      dockerCaptureAutoCreate = Nothing
+                    }
+                )
+              ]
+
+      (response2, capture) <- request "test.scarf.sh" "/v2/alpine/referrers/sha256:abc123"
+      _assertProxiedRedirect "https://docker.io/v2/library/alpine/referrers/sha256:abc123" response2
+
+      liftIO $
+        capture
+          @?= [ ( DockerCapture
+                    { dockerCaptureImage = ["alpine"],
+                      dockerCaptureReference = "sha256:abc123",
+                      dockerCaptureBackendRegistry = "docker.io",
+                      dockerCapturePackage = Just "package-1",
+                      dockerCaptureAutoCreate = Nothing
+                    }
+                )
+              ]
+
+test_gateway_manifest_renamed_docker_repository :: TestTree
+test_gateway_manifest_renamed_docker_repository =
+  gatewayTestCase
+    "Gateway, Docker Pull with renamed backend repository from manifest"
+    ( let content :: Data.ByteString.Lazy.ByteString
+          content =
+            "{\"rules\":[{\"type\":\"docker-v1\",\"package-id\":\"package-1\",\"domain\":\"test.scarf.sh\",\"repository-name\":\"alpine\",\"backend-repository-name\":\"library/alpine\",\"registry\":\"docker.io\"}]}"
+          manifest = fromMaybe (error "manifest error") (decodeManifest content)
+       in newGatewayConfig $ fmap (first encodeUtf8) (manifestToRules manifest)
+    )
+    $ \request -> do
+      (response, capture) <- request "test.scarf.sh" "/v2/alpine/manifests/latest"
+      _assertProxiedRedirect "https://docker.io/v2/library/alpine/manifests/latest" response
+
+      liftIO $
+        capture
+          @?= [ ( DockerCapture
+                    { dockerCaptureImage = ["alpine"],
+                      dockerCaptureReference = "latest",
+                      dockerCaptureBackendRegistry = "docker.io",
+                      dockerCapturePackage = Just "package-1",
+                      dockerCaptureAutoCreate = Nothing
+                    }
+                )
+              ]
 
 test_gateway_docker_rule_v2 :: TestTree
 test_gateway_docker_rule_v2 =
@@ -677,6 +746,8 @@ testTree =
   pure
     [ test_gateway_no_rules,
       test_gateway_docker_rule_v1,
+      test_gateway_docker_rule_v1_renamed_backend,
+      test_gateway_manifest_renamed_docker_repository,
       test_gateway_docker_rule_v2,
       test_gateway_docker_rule_v1_proxied,
       test_gateway_file_rule,

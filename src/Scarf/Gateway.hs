@@ -7,6 +7,7 @@ module Scarf.Gateway
   ( -- * Rules
     Rule,
     newDockerRuleV1,
+    newDockerRuleV1WithBackend,
     newDockerRuleV2,
     newFlatfileRule,
     newPixelRule,
@@ -28,6 +29,7 @@ import Control.Exception (finally)
 import Control.Monad.Fix (fix)
 import Data.Aeson (encode, object, (.=))
 import Data.ByteString (ByteString)
+import Data.ByteString qualified as ByteString
 import Data.ByteString.Builder.Extra (byteStringInsert, lazyByteStringInsert)
 import Data.ByteString.Char8 qualified as BS
 import Data.ByteString.Lazy qualified as LBS
@@ -64,6 +66,7 @@ import Scarf.Gateway.Rule
     Rule,
     RuleCapture (..),
     newDockerRuleV1,
+    newDockerRuleV1WithBackend,
     newDockerRuleV2,
     newFlatfileRule,
     newPixelRule,
@@ -71,6 +74,7 @@ import Scarf.Gateway.Rule
     newScarfJsRule,
   )
 import Scarf.Gateway.Rule qualified as Rule
+import Scarf.Gateway.Rule.Response (DockerProxyRewrite (..), ProxyTarget (..))
 import Scarf.Lib.Tracing
   ( ActiveSpan,
     Tag,
@@ -100,8 +104,7 @@ data GatewayConfig = GatewayConfig
       ActiveSpan ->
       -- http/https?
       Bool ->
-      -- Host proxy to e.g. registry-1.docker.io
-      ByteString ->
+      ProxyTarget ->
       Application
   }
 
@@ -160,12 +163,19 @@ gateway tracer GatewayConfig {..} = do
           RedirectTo capture absoluteUrl ->
             redirectTo tracer span absoluteUrl request respond
               `finally` gatewayReportRequest span request temporaryRedirect307 capture
-          ProxyTo mkCapture domain ->
-            let (targetDomain, shouldUseTLS) = gatewayModifyProxyDomain domain
+          ProxyTo mkCapture ProxyTarget {..} ->
+            let (targetDomain, shouldUseTLS) = gatewayModifyProxyDomain proxyTargetDomain
+                proxyTarget =
+                  ProxyTarget
+                    { proxyTargetDomain = targetDomain,
+                      proxyTargetPath,
+                      proxyTargetQueryString,
+                      proxyTargetDockerRewrite
+                    }
              in gatewayProxyTo
                   span
                   shouldUseTLS
-                  targetDomain
+                  proxyTarget
                   request
                   $ \response -> do
                     let !status = responseStatus response
@@ -304,21 +314,21 @@ proxyTo ::
   ActiveSpan ->
   -- | Secure?
   Bool ->
-  ByteString ->
+  ProxyTarget ->
   Application
-proxyTo tracer manager span shouldUseTLS domain = \request respond ->
+proxyTo tracer manager span shouldUseTLS ProxyTarget {..} = \request respond ->
   traced_ tracer (spanOpts "proxy-to" (childOf span)) $ \span -> do
     addTag span ("proxy-method", StringT (Text.decodeUtf8 (requestMethod request)))
-    addTag span ("proxy-path", StringT (Text.decodeUtf8 (rawPathInfo request)))
-    addTag span ("proxy-query", StringT (Text.decodeUtf8 (rawQueryString request)))
-    addTag span ("proxy-domain", StringT (Text.decodeUtf8 domain))
+    addTag span ("proxy-path", StringT (Text.decodeUtf8 proxyTargetPath))
+    addTag span ("proxy-query", StringT (Text.decodeUtf8 proxyTargetQueryString))
+    addTag span ("proxy-domain", StringT (Text.decodeUtf8 proxyTargetDomain))
     addTag span ("proxy-secure", BoolT shouldUseTLS)
     let (host, port)
-          | [host_, port_] <- BS.split ':' domain,
+          | [host_, port_] <- BS.split ':' proxyTargetDomain,
             Just (port, "") <- BS.readInt port_ =
               (host_, port)
           | otherwise =
-              (domain, if shouldUseTLS then 443 else 80)
+              (proxyTargetDomain, if shouldUseTLS then 443 else 80)
 
         proxyRequest =
           HC.defaultRequest
@@ -328,8 +338,8 @@ proxyTo tracer manager span shouldUseTLS domain = \request respond ->
               HC.secure = shouldUseTLS,
               HC.host = host,
               HC.port = port,
-              HC.path = Wai.rawPathInfo request,
-              HC.queryString = Wai.rawQueryString request,
+              HC.path = proxyTargetPath,
+              HC.queryString = proxyTargetQueryString,
               HC.requestHeaders = fixupRequestHeaders request,
               HC.requestBody =
                 -- We don't proxy request bodies. Read-only access throuhgout.
@@ -342,6 +352,7 @@ proxyTo tracer manager span shouldUseTLS domain = \request respond ->
         Wai.responseStream
           (HC.responseStatus response)
           ( fixupResponseHeaders
+              request
               (HC.responseStatus response)
               (HC.responseHeaders response)
           )
@@ -367,7 +378,7 @@ proxyTo tracer manager span shouldUseTLS domain = \request respond ->
     isRedirect status =
       status `elem` [toEnum 302, toEnum 307]
 
-    fixupResponseHeaders status headers =
+    fixupResponseHeaders request status headers =
       [ (name, sanitizedValue)
         | (name, value) <- headers,
           case name of
@@ -389,11 +400,74 @@ proxyTo tracer manager span shouldUseTLS domain = \request respond ->
                   "Location"
                     | "/" `BS.isPrefixOf` (BS.strip value) ->
                         (if shouldUseTLS then "https://" else "http://")
-                          <> domain
+                          <> proxyTargetDomain
                           <> (BS.strip value)
+                  "WWW-Authenticate"
+                    | Just dockerRewrite <- proxyTargetDockerRewrite ->
+                        rewriteDockerWwwAuthenticate request dockerRewrite value
+                  "Link"
+                    | Just dockerRewrite <- proxyTargetDockerRewrite ->
+                        rewriteDockerLink dockerRewrite value
                   _ ->
                     value
       ]
+
+    rewriteDockerWwwAuthenticate request DockerProxyRewrite {..} value =
+      replaceQuotedAttr "realm" (gatewayDockerTokenRealm request) $
+        case (dockerProxyPublicRepository, dockerProxyBackendRepository) of
+          (Just publicRepository, Just backendRepository) ->
+            replaceOnce
+              ("repository:" <> backendRepository <> ":")
+              ("repository:" <> publicRepository <> ":")
+              value
+          _ ->
+            value
+
+    rewriteDockerLink DockerProxyRewrite {..} value =
+      case (dockerProxyPublicRepository, dockerProxyBackendRepository) of
+        (Just publicRepository, Just backendRepository) ->
+          replaceOnce
+            ("/v2/" <> backendRepository <> "/")
+            ("/v2/" <> publicRepository <> "/")
+            value
+        _ ->
+          value
+
+    gatewayDockerTokenRealm request =
+      requestScheme request <> "://" <> requestHost request <> "/_scarf/docker-token"
+
+    requestScheme request =
+      case lookup "X-Forwarded-Proto" (Wai.requestHeaders request) of
+        Just "http" -> "http"
+        Just "https" -> "https"
+        _ ->
+          if Wai.isSecure request
+            then "https"
+            else "http"
+
+    requestHost request =
+      fromMaybe "" $
+        lookup "X-Forwarded-Host" (Wai.requestHeaders request)
+          <|> requestHeaderHost request
+          <|> lookup "Host" (Wai.requestHeaders request)
+
+    replaceOnce old new input =
+      let (before, match) = ByteString.breakSubstring old input
+       in if ByteString.null match
+            then input
+            else before <> new <> ByteString.drop (ByteString.length old) match
+
+    replaceQuotedAttr attr new input =
+      let needle = attr <> "=\""
+          (before, match) = ByteString.breakSubstring needle input
+       in if ByteString.null match
+            then input
+            else
+              let rest = ByteString.drop (ByteString.length needle) match
+                  (_oldValue, suffix) = ByteString.break (== 34) rest
+               in if ByteString.null suffix
+                    then input
+                    else before <> needle <> new <> suffix
 
     fixupRequestHeaders request =
       ( case lookup "X-Forwarded-For" (Wai.requestHeaders request) of

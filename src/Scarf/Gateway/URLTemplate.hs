@@ -120,7 +120,7 @@ validate input =
               else Left (InvalidScheme (Text.pack uriScheme))
         | otherwise =
             Left InvalidURL
-   in foldl' (>>=) (Right input) [expandsProperly, urlCheck]
+   in List.foldl' (>>=) (Right input) [expandsProperly, urlCheck]
 
 -- | Extracts the variables contained in a template.
 variables :: URLTemplate -> [Text]

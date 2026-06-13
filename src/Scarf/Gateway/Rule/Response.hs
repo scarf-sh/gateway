@@ -1,5 +1,7 @@
 module Scarf.Gateway.Rule.Response
-  ( ResponseBuilder (..),
+  ( DockerProxyRewrite (..),
+    ProxyTarget (..),
+    ResponseBuilder (..),
   )
 where
 
@@ -8,6 +10,18 @@ import Data.ByteString (ByteString)
 import Data.Text (Text)
 import Network.Wai qualified as Wai
 import Scarf.Gateway.Rule.Capture (RuleCapture)
+
+data DockerProxyRewrite = DockerProxyRewrite
+  { dockerProxyPublicRepository :: !(Maybe ByteString),
+    dockerProxyBackendRepository :: !(Maybe ByteString)
+  }
+
+data ProxyTarget = ProxyTarget
+  { proxyTargetDomain :: !ByteString,
+    proxyTargetPath :: !ByteString,
+    proxyTargetQueryString :: !ByteString,
+    proxyTargetDockerRewrite :: !(Maybe DockerProxyRewrite)
+  }
 
 -- | Allows building an abstract response from the rule matchers. Keeping the
 -- response abstract helps keeps us honest and eases testing.
@@ -32,6 +46,6 @@ data ResponseBuilder response = ResponseBuilder
     -- the upstream response.
     proxyTo ::
       (Wai.Response -> RuleCapture) ->
-      ByteString ->
+      ProxyTarget ->
       response
   }

@@ -38,7 +38,7 @@ import Scarf.Gateway.Regex (Regex)
 import Scarf.Gateway.Rule
   ( Rule,
     newCatchAllRule,
-    newDockerRuleV1,
+    newDockerRuleV1WithBackend,
     newDockerRuleV2,
     newFileRuleV2,
     newFlatfileRule,
@@ -76,6 +76,8 @@ data ManifestRule
         manifestRuleDomain :: !Domain,
         -- | e.g. @"library/hello-world"@
         manifestRuleRepositoryName :: !Text,
+        -- | Optional backend repository if it differs from the requested repository.
+        manifestRuleBackendRepositoryName :: !(Maybe Text),
         -- | e.g. @docker.io@, @ghcr.io@
         manifestRuleBackendRegistry :: !Text,
         manifestRuleAlwaysProxy :: !(Maybe Bool)
@@ -218,6 +220,7 @@ instance FromJSON ManifestRule where
           <*> o .: "package-id"
           <*> o .: "domain"
           <*> o .: "repository-name"
+          <*> o .:? "backend-repository-name"
           <*> o .: "registry"
           <*> o .:? "always-proxy"
       "docker-v2" ->
@@ -283,6 +286,7 @@ instance ToJSON ManifestRule where
           "package-id" .= manifestRulePackageId,
           "domain" .= manifestRuleDomain,
           "repository-name" .= manifestRuleRepositoryName,
+          "backend-repository-name" .= manifestRuleBackendRepositoryName,
           "registry" .= manifestRuleBackendRegistry,
           "always-proxy" .= manifestRuleAlwaysProxy
         ]
@@ -387,9 +391,10 @@ manifestToRules Manifest {..} =
 manifestRuleToRule :: ManifestRule -> Rule
 manifestRuleToRule manifestRule = case manifestRule of
   ManifestDockerRuleV1 {..} ->
-    newDockerRuleV1
+    newDockerRuleV1WithBackend
       manifestRulePackageId
       (Text.splitOn "/" manifestRuleRepositoryName)
+      (Text.splitOn "/" (fromMaybe manifestRuleRepositoryName manifestRuleBackendRepositoryName))
       manifestRuleBackendRegistry
       (fromMaybe False manifestRuleAlwaysProxy)
   ManifestDockerRuleV2 {..} ->

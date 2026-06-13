@@ -11,6 +11,7 @@ module Scarf.Gateway.Rule
   ( -- * Rules
     Rule,
     newDockerRuleV1,
+    newDockerRuleV1WithBackend,
     newDockerRuleV2,
     newFlatfileRule,
     newFileRuleV2,
@@ -72,13 +73,14 @@ import Scarf.Gateway.ImagePattern qualified as ImagePattern
 import Scarf.Gateway.Regex qualified as Regex
 import Scarf.Gateway.Rule.Capture (RuleCapture (..))
 import Scarf.Gateway.Rule.Docker
-  ( DockerRuleV1 (..),
+  ( DockerImageRule (..),
+    DockerRuleV1 (..),
     DockerRuleV2 (..),
     matchDockerRuleV1,
     matchDockerRuleV2,
   )
 import Scarf.Gateway.Rule.Request (Request (..), newRequest)
-import Scarf.Gateway.Rule.Response (ResponseBuilder (..))
+import Scarf.Gateway.Rule.Response (ProxyTarget (..), ResponseBuilder (..))
 import Scarf.Gateway.Rule.Telemetry qualified
 import Scarf.Gateway.URLTemplate (URLTemplate)
 import Scarf.Gateway.URLTemplate qualified as URLTemplate
@@ -276,7 +278,7 @@ data RedirectOrProxy
   | -- | Host to proxy the request to, e.g. registry.docker.com
     ProxyTo
       (Response -> RuleCapture)
-      !ByteString
+      !ProxyTarget
   | -- | Respond with bytes directly.
     RespondBytes
       !RuleCapture
@@ -323,9 +325,30 @@ newDockerRuleV1 ::
   Bool ->
   Rule
 newDockerRuleV1 package image backendDomain alwaysProxy =
+  newDockerRuleV1WithBackend package image image backendDomain alwaysProxy
+
+newDockerRuleV1WithBackend ::
+  -- Package identifier
+  Text ->
+  -- | Docker image components requested by the user.
+  [Text] ->
+  -- | Docker image components on the backend registry.
+  [Text] ->
+  -- | Docker registry requests are redirected or proxied to.
+  Text ->
+  -- | Flag indicating whether to always proxy and never redirect.
+  Bool ->
+  Rule
+newDockerRuleV1WithBackend package image backendImage backendDomain alwaysProxy =
   RuleDockerV1
     DockerRuleV1
-      { ruleImages = HashMap.singleton image package,
+      { ruleImages =
+          HashMap.singleton
+            image
+            DockerImageRule
+              { dockerImageRulePackage = package,
+                dockerImageRuleBackendImage = backendImage
+              },
         ruleBackendRegistry = Text.encodeUtf8 (sanitizeDockerhubDomain backendDomain),
         ruleAlwaysProxy = alwaysProxy
       }

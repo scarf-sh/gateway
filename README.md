@@ -79,6 +79,7 @@ There are different manifest rules for docker, file, and python packages. The ru
 For Docker Packages (`docker-v1`) some additional properties are required:
 
 - `repository-name` - The image name used by the docker pull command. E.g. `library/hello-world`, `library/nginx`
+- `backend-repository-name` - Optional image name on the backend registry when it differs from `repository-name`. E.g. use `repository-name: "alpine"` with `backend-repository-name: "library/alpine"` to serve `yourdomain.com/alpine` from Docker Hub's `library/alpine`.
 - `backend-registry` - The backend registry domain. The most common are `registry-1.docker.io` for Docker Hub, and `ghcr.io` for GitHub.
 
 Example of Docker rule:
@@ -89,6 +90,19 @@ Example of Docker rule:
   "package-id": "6d3cda25-4ffc-461f-a1b8-72abf9ab3fc1",
   "domain": "registry.helloworlders",
   "repository-name": "library/hello-world", 
+  "registry": "registry-1.docker.io"
+}
+```
+
+Example of a Docker rule that renames the backend repository:
+
+```
+{
+  "type": "docker-v1",
+  "package-id": "6d3cda25-4ffc-461f-a1b8-72abf9ab3fc1",
+  "domain": "registry.helloworlders",
+  "repository-name": "alpine",
+  "backend-repository-name": "library/alpine",
   "registry": "registry-1.docker.io"
 }
 ```
